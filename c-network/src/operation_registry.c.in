@@ -1,0 +1,35 @@
+/**
+ *
+ * Copyright (c) 2023 C-NET
+ * All rights reserved.
+ * Created by XiangWei-Zeng
+ *
+ **/
+
+
+
+#include "operation.h"
+
+const char* operation_names[] = {
+@operation_names@};
+
+@operation_creators@
+
+const operation_registry_entry_t operation_registry[] = {
+@operation_creator@};
+
+const int operation_registry_entry_count = sizeof(operation_registry) / sizeof(operation_registry_entry_t);
+
+operation_t *create_operation(int operation_type) {
+    if (operation_type < 0 || operation_type >= operation_registry_entry_count){
+        return NULL;
+    }
+
+    operation_creator_func operation_creator = operation_registry[operation_type];
+    if (!operation_creator){
+        return NULL;
+    }
+
+    operation_t *operation = operation_creator();
+    return operation;
+}
