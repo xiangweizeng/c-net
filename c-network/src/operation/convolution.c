@@ -12,6 +12,8 @@
 #include "operation_config.h"
 #include "quantize16.h"
 
+#include <stdio.h>
+
 typedef struct conv_int16_context {
     tensor_t* bottom;
     tensor_t* top;

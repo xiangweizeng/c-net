@@ -9,6 +9,7 @@
 #include <allocator.h>
 #include "tensor.h"
 #include "container_vector.h"
+#include <stdio.h>
 
 /**
  * vector impl for tensor_t
@@ -114,7 +115,7 @@ void tensor_print_int32(tensor_t *tensor){
             int32_t *data = (int32_t*) m.data;
             for(int h = 0; h < m.d1; h++){
                 for(int w = 0; w < m.d0; w ++){
-                    printf("%d,", data[h*m.d0 + w]);
+                    printf("%ld,", data[h*m.d0 + w]);
                 }
                 printf("\n");
             }

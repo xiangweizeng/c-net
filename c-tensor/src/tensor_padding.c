@@ -628,4 +628,5 @@ tensor_t tensor_padding(
     padding_channels_context_t context = {src, &dst, top, left, type, v, elem_size};
     PARALLELIZE_1D(padding_channels_thread, context, channels);
 
+    return dst;
 }

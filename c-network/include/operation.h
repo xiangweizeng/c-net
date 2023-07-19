@@ -13,6 +13,7 @@
 #define CNET_LAYER_H
 
 #include "operation_config.h"
+#include <stdio.h>
 
 /// Blob container
 typedef struct blob_container {

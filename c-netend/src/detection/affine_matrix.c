@@ -105,7 +105,7 @@ void get_affine_matrix_from_5p(float *src_5pts, const float *dst_5pts, float *M)
             _sqloss += ((pts0[0] + pts1[i] - dst[i]) * (pts0[0] + pts1[i] - dst[i])
                         + (pts0[1] + pts1[i + 5] - dst[i + 5]) * (pts0[1] + pts1[i + 5] - dst[i + 5]));
         }
-        if (abs(_sqloss - sqloss) < 1e-2) {
+        if (fabs(_sqloss - sqloss) < 1e-2) {
             break;
         }
         sqloss = _sqloss;
@@ -241,7 +241,7 @@ int guass_jordan(float m[3][5], float eps) {
     for (int y = 0; y < h; y++) {
         int maxrow = y;
         for (int y2 = y + 1; y2 < h; y2++) {
-            if (abs(m[y2][y]) > abs(m[maxrow][y])) {
+            if (fabs(m[y2][y]) > fabs(m[maxrow][y])) {
                 maxrow = y2;
             }
         }

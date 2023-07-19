@@ -214,7 +214,7 @@ FUNCTION_IRAM static int session_forward_operation(
 
         if (opt->light_mode) {
 
-            if(*bottom_blobs.data[i].data.refcount == 2){
+            if(NULL != bottom_blobs.data[i].data.refcount && *bottom_blobs.data[i].data.refcount == 2){
                 /// delete after taken in light mode
                 tensor_release(&context->blob_data[bottom_blob_index].data);
             } else {
