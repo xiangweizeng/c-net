@@ -129,7 +129,7 @@ int push_vector_##type##_element_impl(vector_##type##_ptr vec, type *src){      
     if(vec->current_size >= vec->length){                                       \
         long new_length = vec->length + VECTOR_EXPAND_SIZE;                     \
         type *data = (type*)vec->malloc(new_length * sizeof(type));             \
-        if (data){                                                              \     
+        if (data){                                                              \
             if(vec->data != NULL){                                              \
                 memcpy(data, vec->data, sizeof(type) * vec->current_size);      \
                 vec->free(vec->data);                                           \
