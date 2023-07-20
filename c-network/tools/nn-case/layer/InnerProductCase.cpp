@@ -44,7 +44,7 @@ bool InnerProductCase::get_layer_define(std::string &layer_define) {
     std::string input = get_blob_input_name(0);
     std::string output = get_blob_output_name(0);
 
-    ncnn::InnerProduct *ip = dynamic_cast<ncnn::InnerProduct *>(layer);
+    auto *ip = dynamic_cast<ncnn::InnerProduct *>(layer);
     int inw = (int)ip->bottom_shapes[0].w;
     int inh = (int)ip->bottom_shapes[0].h;
     int inc = (int)ip->bottom_shapes[0].c;

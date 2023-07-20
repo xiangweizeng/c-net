@@ -1,11 +1,3 @@
-/**
- *
- * Copyright (c) 2023 C-NET
- * All rights reserved.
- * Created by XiangWei-Zeng
- *
- **/
-
 /***
  * Auto Generate by esp - nn - case
 */

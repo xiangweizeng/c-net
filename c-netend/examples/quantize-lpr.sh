@@ -52,3 +52,6 @@
           --mean=0,0,0 \
           --norm=1.0,1.0,1.0 \
           --thread=8
+
+./nn-case face-opt.param face-opt.bin face-opt.h face-opt.c face-opt.table
+./nn-case mobilefacenet-opt.param mobilefacenet-opt.bin mobilefacenet-opt.h mobilefacenet-opt.c mobilefacenet-opt.table
