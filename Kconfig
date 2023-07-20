@@ -1,0 +1,7 @@
+
+
+config COMPONENT_CNET_ENABLE
+	bool "Enbale cnet component"
+	default y
+	select COMPONENT_KENDRYTE_SDK_ENABLE
+	select COMPONENT_POSIX_ENABLE

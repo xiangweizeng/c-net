@@ -9,6 +9,8 @@
 #include "detection/object_box.h"
 #include "tensor_pixel.h"
 
+#include <stdio.h>
+
 object_box_t object_box_create_default() {
     object_box_t box;
     memset(&box, 0, sizeof(box));
