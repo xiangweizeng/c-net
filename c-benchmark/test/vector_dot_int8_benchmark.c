@@ -6,8 +6,6 @@
  *
  **/
 
-
-
 #include "vector_dot_int8_benchmark.h"
 #include "vector_dot_int8.h"
 #include "allocator.h"

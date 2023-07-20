@@ -17,14 +17,14 @@
 /**
  * benchmark_old declare for function benchmark_old
  */
-#define BENCHMARK_DECLARE(impl, create_args_t)\
-void run_##impl##_benchmark();\
-typedef benchmark_status_t (*impl##_benchmark_function)(create_args_t *);\
-void benchmark_##impl_set_setup(impl##_benchmark_function);\
-void benchmark_##impl_set_tear_down(impl##_benchmark_function);\
-typedef struct benchmark_##impl##_t{\
-    char name[256];\
-    create_args_t args;\
+#define BENCHMARK_DECLARE(impl, create_args_t)                              \
+void run_##impl##_benchmark();                                              \
+typedef benchmark_status_t (*impl##_benchmark_function)(create_args_t *);   \
+void benchmark_##impl_set_setup(impl##_benchmark_function);                 \
+void benchmark_##impl_set_tear_down(impl##_benchmark_function);             \
+typedef struct benchmark_##impl##_t{                                        \
+    char name[256];                                                         \
+    create_args_t args;                                                     \
 }benchmark_##impl##_t;
 
 /**

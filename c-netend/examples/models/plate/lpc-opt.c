@@ -1,11 +1,3 @@
-/**
- *
- * Copyright (c) 2023 C-NET
- * All rights reserved.
- * Created by XiangWei-Zeng
- *
- **/
-
 /***
  * Auto Generate by nn-case
 */
@@ -7945,20 +7937,20 @@ static const unsigned char layer_relu4_prelu_slope_data[] = {
 0x4b,0xaa,0x77,0x3e,0xec,0xa9,0x7d,0x3e,0x46,0x9c,0x78,0x3e,0xe4,0xa3,0x77,0x3e,0x3c,0xa6,0x7a,0x3e,0x66,0x91,0x76,0x3e,0x1d,0x4a,0x75,0x3e,0xb9,0x02,0x74,0x3e,
 0x9f,0xc0,0x77,0x3e,0x0e,0x35,0x73,0x3e,0xeb,0x20,0x78,0x3e,0x48,0x76,0x77,0x3e,0x9b,0xdc,0x76,0x3e,0x41,0x9d,0x71,0x3e,0x10,0x3d,0x7b,0x3e,0x2a,0x21,0x77,0x3e,
 };
-DEFINE_TENSOR(layer_relu4_prelu_slope, 512, layer_relu4_prelu_slope_data, 1.000000)DEFINE_CONVOLUTION_LAYER(conv1, 32, 3, 3, 3, 1, 1, 1, 1, 1,  2, 2, 2, 2, 0, 1, 16195939, 42, 8388608, 23, 32767, -32768);
-DEFINE_POOLING_LAYER(pool1, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, -32768, 0, 8392768, 23);
-DEFINE_PRELU_LAYER(relu1, 32, 8558375, 23);
-DEFINE_CONVOLUTION_LAYER(conv2, 32, 32, 3, 3, 1, 1, 1, 1, 1,  2, 2, 2, 2, 0, 1, 13573251, 42, 8388608, 23, 32767, -32768);
-DEFINE_PRELU_LAYER(relu2, 32, 10322612, 23);
-DEFINE_POOLING_LAYER(pool2, 1, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 16588526, 24);
-DEFINE_CONVOLUTION_LAYER(conv3, 64, 32, 3, 3, 1, 1, 1, 1, 1,  2, 2, 2, 2, 0, 1, 12093727, 42, 8388608, 23, 32767, -32768);
-DEFINE_PRELU_LAYER(relu3, 64, 9274907, 23);
-DEFINE_POOLING_LAYER(pool3, 1, 2, 2, 2, 2, 0, 0, 1, 0, 1, 0, 0, 8596530, 23);
-DEFINE_CONVOLUTION_LAYER(conv4, 128, 64, 3, 3, 1, 1, 1, 1, 1,  2, 2, 2, 2, 0, 1, 15233809, 42, 8388608, 23, 32767, -32768);
-DEFINE_PRELU_LAYER(relu4, 128, 12672471, 23);
-DEFINE_POOLING_LAYER(pool4, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 0, 0, 9872275, 23);
+DEFINE_TENSOR(layer_relu4_prelu_slope, 512, layer_relu4_prelu_slope_data, 1.000000)DEFINE_CONVOLUTION_LAYER(conv1, 32, 3, 3, 3, 1, 1, 1, 1, 1,  2, 2, 2, 2, 0, 1, 30, 23, 16, 4, 32767, -32768);
+DEFINE_POOLING_LAYER(pool1, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, -32768, 0, 16, 4);
+DEFINE_PRELU_LAYER(relu1, 32, 16, 4);
+DEFINE_CONVOLUTION_LAYER(conv2, 32, 32, 3, 3, 1, 1, 1, 1, 1,  2, 2, 2, 2, 0, 1, 25, 23, 16, 4, 32767, -32768);
+DEFINE_PRELU_LAYER(relu2, 32, 19, 4);
+DEFINE_POOLING_LAYER(pool2, 1, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 31, 5);
+DEFINE_CONVOLUTION_LAYER(conv3, 64, 32, 3, 3, 1, 1, 1, 1, 1,  2, 2, 2, 2, 0, 1, 23, 23, 16, 4, 32767, -32768);
+DEFINE_PRELU_LAYER(relu3, 64, 17, 4);
+DEFINE_POOLING_LAYER(pool3, 1, 2, 2, 2, 2, 0, 0, 1, 0, 1, 0, 0, 16, 4);
+DEFINE_CONVOLUTION_LAYER(conv4, 128, 64, 3, 3, 1, 1, 1, 1, 1,  2, 2, 2, 2, 0, 1, 29, 23, 16, 4, 32767, -32768);
+DEFINE_PRELU_LAYER(relu4, 128, 24, 4);
+DEFINE_POOLING_LAYER(pool4, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 0, 0, 18, 4);
 DEFINE_RESHAPE_LAYER(_reshape_ip2);
-DEFINE_CONVOLUTION_LAYER(ip2, 5, 4608, 1, 1, 1, 1, 1, 1, 1,  0, 0, 0, 0, 0, 1, 14465124, 42, 8388608, 23, 32767, -32768);
+DEFINE_CONVOLUTION_LAYER(ip2, 5, 4608, 1, 1, 1, 1, 1, 1, 1,  0, 0, 0, 0, 0, 1, 27, 23, 16, 4, 32767, -32768);
 DEFINE_SOFTMAX_LAYER(prob,1);
 
 static blob_info_t network_blobs[] = {
