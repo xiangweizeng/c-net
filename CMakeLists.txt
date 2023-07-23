@@ -30,32 +30,32 @@ macro(cnet_add_operation class file)
 endmacro()
 
 set(UTILS_SRCS
-    c-utils/src/allocator.c
-    c-utils/src/container_linked_list.c
-    c-utils/src/container_vector.c
-    c-utils/src/threadpool-pthreads.c
-    c-utils/src/option.c
-    c-utils/src/ncx-pool/ncx_slab.c
-    c-utils/src/memory_cached.c
-    )
+        c-utils/src/allocator.c
+        c-utils/src/container_linked_list.c
+        c-utils/src/container_vector.c
+        c-utils/src/threadpool-pthreads.c
+        c-utils/src/option.c
+        c-utils/src/ncx-pool/ncx_slab.c
+        c-utils/src/memory_cached.c
+        )
 
-set(TESTER_SRCS 
-    c-tester/src/tester.c 
-    c-tester/src/unity.c
-    )
+set(TESTER_SRCS
+        c-tester/src/tester.c
+        c-tester/src/unity.c
+        )
 
-set(BENCH_MARK_SRCS 
-    c-benchmark/src/benchmark.c
-    )
+set(BENCH_MARK_SRCS
+        c-benchmark/src/benchmark.c
+        )
 
-set(TENSOR_SRCS 
-    c-tensor/src/tensor.c
-    c-tensor/src/tensor_softmax.c
-    c-tensor/src/tensor_padding.c
-    c-tensor/src/tensor_cut_border.c
-    c-tensor/src/tensor_resize_bilinear.c
-    c-tensor/src/tensor_resize_bicubic.c
-    )
+set(TENSOR_SRCS
+        c-tensor/src/tensor.c
+        c-tensor/src/tensor_softmax.c
+        c-tensor/src/tensor_padding.c
+        c-tensor/src/tensor_cut_border.c
+        c-tensor/src/tensor_resize_bilinear.c
+        c-tensor/src/tensor_resize_bicubic.c
+        )
 
 cnet_add_operation(convolution convolution ON)
 cnet_add_operation(pooling pooling ON)
@@ -77,56 +77,58 @@ cnet_add_operation(prelu prelu ON)
 cnet_add_operation(memory_data memory_data ON)
 cnet_add_operation(shuffle_channel shuffle_channel ON)
 
-# configure_file(c-network/src/operation_registry.c.in 
-#     ${CMAKE_CURRENT_SOURCE_DIR}/c-network/src/operation_registry.c)
 set(NETWORK_SRCS
-    c-network/src/operation.c
-    c-network/src/network.c
-    c-network/src/operation_benchmark.c
-    c-network/src/quantize16.c
-    c-network/src/operation_registry.c
-    ${OPERATION_SRCS}
-    )
+        c-network/src/operation.c
+        c-network/src/network.c
+        c-network/src/operation_benchmark.c
+        c-network/src/quantize16.c
+        c-network/src/operation_registry.c
+        ${OPERATION_SRCS}
+        )
 
 set(NETEND_SRCS
-    c-netend/src/detection/object_box.c
-    c-netend/src/detection/mtcnn.c
-    c-netend/src/detection/retina_face.c
-    c-netend/src/detection/affine_matrix.c
-    c-netend/src/detection/yolov2.c
-    c-netend/src/detection/yolov3.c
-    c-netend/src/face/face_info.c
-    c-netend/src/face/arc_face.c
-    c-netend/src/face/mtcnn_face_detector.c
-    c-netend/src/lpr/plate_info.c
-    c-netend/src/lpr/lpr_recognizer.c
-    c-netend/src/lpr/lpc_recoginizer.c
-    c-netend/src/lpr/mtcnn_plate_detector.c
-    )
+        c-netend/src/detection/object_box.c
+        c-netend/src/detection/mtcnn.c
+        c-netend/src/detection/retina_face.c
+        c-netend/src/detection/affine_matrix.c
+        c-netend/src/detection/yolov2.c
+        c-netend/src/detection/yolov3.c
+        c-netend/src/face/face_info.c
+        c-netend/src/face/arc_face.c
+        c-netend/src/face/mtcnn_face_detector.c
+        c-netend/src/lpr/plate_info.c
+        c-netend/src/lpr/lpr_recognizer.c
+        c-netend/src/lpr/lpc_recoginizer.c
+        c-netend/src/lpr/mtcnn_plate_detector.c
+        )
 
 set(IMAGE_SRCS
-    c-image/src/imgproc.c 
-    c-image/src/tensor_pixel.c
-    )
+        c-image/src/imgproc.c
+        c-image/src/tensor_pixel.c
+        )
 
-set(COMPONENT_SRCS 
-    ${UTILS_SRCS} 
-    ${TESTER_SRCS} 
-    ${BENCH_MARK_SRCS} 
-    ${TENSOR_SRCS} 
-    ${NETWORK_SRCS} 
-    ${NETEND_SRCS}
-    ${IMAGE_SRCS}
-    )
+set(COMPONENT_SRCS
+        ${UTILS_SRCS}
+        ${TESTER_SRCS}
+        ${BENCH_MARK_SRCS}
+        ${TENSOR_SRCS}
+        ${NETWORK_SRCS}
+        ${NETEND_SRCS}
+        ${IMAGE_SRCS}
+        )
+
+set(COMPONENT_ADD_INCLUDEDIRS
+        c-utils/include
+        c-tester/include
+        c-benchmark/include
+        c-tensor/include
+        c-network/include
+        c-netend/include
+        c-image/include
+        )
 
 register_component()
-
-include_directories(c-utils/include)
-include_directories(c-tester/include)
-include_directories(c-benchmark/include)
-include_directories(c-tensor/include)
-include_directories(c-network/include)
-include_directories(c-netend/include)
-include_directories(c-image/include)
+configure_file(c-network/src/operation_registry.c.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/c-network/src/operation_registry.c)
 add_definitions(-DESP32)
 add_definitions(-Wall -Wno-unused-function -Ofast)
