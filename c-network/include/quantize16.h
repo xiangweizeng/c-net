@@ -17,6 +17,7 @@
 #include "allocator.h"
 #include "option.h"
 #include <tensor.h>
+#include <assert.h>
 
 FUNCTION_IRAM static inline int8_t float2int8(float v) {
     int int32 = round(v);
@@ -61,8 +62,10 @@ FUNCTION_IRAM static fixed_mul_t get_fixed_mul(float value)
         return  fixed_mul;
     }
     uint32_t scale_bits = fp32_to_bits(value);
-    const int32_t multiplier = ((int32_t) scale_bits & INT32_C(0x007FFFFF)) | INT32_C(0x00800000);
-    const int32_t shift = 127 + 23 - ((scale_bits >> 23) & 0xFF);
+    const int32_t multiplier = (((int32_t) scale_bits & INT32_C(0x007FFFFF)) | INT32_C(0x00800000)) >> 19;
+    const int32_t shift = 127 + 4 - ((scale_bits >> 23) & 0xFF);
+
+    assert(shift >= 0);
 
     if(value > 0){
         fixed_mul_t fixed_mul = {multiplier, (int8_t)(shift) };

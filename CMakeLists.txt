@@ -127,8 +127,18 @@ set(COMPONENT_ADD_INCLUDEDIRS
         c-image/include
         )
 
+set(COMPONENT_ADD_INCLUDEDIRS
+    c-utils/include
+    c-tester/include
+    c-benchmark/include
+    c-tensor/include
+    c-network/include
+    c-netend/include
+    c-image/include
+    )
+  
 register_component()
-configure_file(c-network/src/operation_registry.c.in
-        ${CMAKE_CURRENT_SOURCE_DIR}/c-network/src/operation_registry.c)
+configure_file(c-network/src/operation_registry.c.in 
+            ${CMAKE_CURRENT_SOURCE_DIR}/c-network/src/operation_registry.c)
 add_definitions(-DESP32)
 add_definitions(-Wall -Wno-unused-function -Ofast)
