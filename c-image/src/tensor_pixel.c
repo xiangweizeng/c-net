@@ -19,26 +19,22 @@
 static tensor_t from_rgb(const unsigned char* rgb, int w, int h, allocator_t *allocator)
 {
     tensor_t m = tensor_create_default();
-    tensor_create_3d(&m, w, h, 3, 4u, allocator);
+    tensor_create_3d(&m, 3, w, h, 4u, allocator);
     if (tensor_empty(&m))
         return m;
 
-    float* ptr0 = (float*)tensor_d2(&m, 0).data;
-    float* ptr1 = (float*)tensor_d2(&m, 1).data;
-    float* ptr2 = (float*)tensor_d2(&m, 2).data;
+    float* ptr0 = (float*)m.data;
 
     int size = w * h;
     int remain = size;
     for (; remain>0; remain--)
     {
-        *ptr0 = rgb[0];
-        *ptr1 = rgb[1];
-        *ptr2 = rgb[2];
+        ptr0[0] = rgb[0];
+        ptr0[1] = rgb[1];
+        ptr0[2] = rgb[2];
 
         rgb += 3;
-        ptr0++;
-        ptr1++;
-        ptr2++;
+        ptr0 += 3;
     }
 
     return m;
@@ -46,9 +42,7 @@ static tensor_t from_rgb(const unsigned char* rgb, int w, int h, allocator_t *al
 
 static void to_rgb(tensor_t *m, unsigned char* rgb)
 {
-    const float* ptr0 = (const float*)tensor_d2(m, 0).data;
-    const float* ptr1 = (const float*)tensor_d2(m, 1).data;
-    const float* ptr2 = (const float*)tensor_d2(m, 2).data;;
+    const float* ptr0 = (const float*)m->data;
 
     int size = m->d0 * m->d1;
 
@@ -58,14 +52,12 @@ static void to_rgb(tensor_t *m, unsigned char* rgb)
 
     for (; remain>0; remain--)
     {
-        rgb[0] = SATURATE_CAST_UCHAR(*ptr0);
-        rgb[1] = SATURATE_CAST_UCHAR(*ptr1);
-        rgb[2] = SATURATE_CAST_UCHAR(*ptr2);
+        rgb[0] = SATURATE_CAST_UCHAR(ptr0[0]);
+        rgb[1] = SATURATE_CAST_UCHAR(ptr0[1]);
+        rgb[2] = SATURATE_CAST_UCHAR(ptr0[2]);
 
         rgb += 3;
-        ptr0++;
-        ptr1++;
-        ptr2++;
+        ptr0+= 3;
     }
 
 #undef SATURATE_CAST_UCHAR
@@ -74,7 +66,7 @@ static void to_rgb(tensor_t *m, unsigned char* rgb)
 static tensor_t from_gray(const unsigned char* gray, int w, int h, allocator_t *allocator)
 {
     tensor_t m = tensor_create_default();
-    tensor_create_3d(&m, w, h, 1, 4u, allocator);
+    tensor_create_3d(&m, 1, w, h, 4u, allocator);
     if (tensor_empty(&m))
         return m;
 
@@ -118,31 +110,24 @@ static void to_gray(tensor_t *m, unsigned char* gray)
 static tensor_t from_rgba(const unsigned char* rgba, int w, int h, allocator_t *allocator)
 {
     tensor_t m = tensor_create_default();
-    tensor_create_3d(&m, w, h, 4, 4u, allocator);
+    tensor_create_3d(&m, 4, w, h, 4u, allocator);
     if (tensor_empty(&m))
         return m;
 
-    float* ptr0 = (float*)tensor_d2(&m, 0).data;
-    float* ptr1 = (float*)tensor_d2(&m, 1).data;
-    float* ptr2 = (float*)tensor_d2(&m, 2).data;
-    float* ptr3 = (float*)tensor_d2(&m, 3).data;
-
+    float* ptr0 = (float*)m.data;
     int size = w * h;
 
 
     int remain = size;
     for (; remain>0; remain--)
     {
-        *ptr0 = rgba[0];
-        *ptr1 = rgba[1];
-        *ptr2 = rgba[2];
-        *ptr3 = rgba[3];
+        ptr0[0] = rgba[0];
+        ptr0[1] = rgba[1];
+        ptr0[2] = rgba[2];
+        ptr0[3] = rgba[3];
 
         rgba += 4;
-        ptr0++;
-        ptr1++;
-        ptr2++;
-        ptr3++;
+        ptr0 += 4;
     }
 
     return m;
@@ -150,10 +135,7 @@ static tensor_t from_rgba(const unsigned char* rgba, int w, int h, allocator_t *
 
 static void to_rgba(tensor_t *m, unsigned char* rgba)
 {
-    const float* ptr0 = (const float*)tensor_d2(m, 0).data;
-    const float* ptr1 = (const float*)tensor_d2(m, 1).data;
-    const float* ptr2 = (const float*)tensor_d2(m, 2).data;
-    const float* ptr3 = (const float*)tensor_d2(m, 3).data;
+    const float* ptr0 = (const float*)m->data;
 
     int size = m->d0 * m->d1;
 
@@ -163,16 +145,13 @@ static void to_rgba(tensor_t *m, unsigned char* rgba)
 
     for (; remain>0; remain--)
     {
-        rgba[0] = SATURATE_CAST_UCHAR(*ptr0);
-        rgba[1] = SATURATE_CAST_UCHAR(*ptr1);
-        rgba[2] = SATURATE_CAST_UCHAR(*ptr2);
-        rgba[3] = SATURATE_CAST_UCHAR(*ptr3);
+        rgba[0] = SATURATE_CAST_UCHAR(ptr0[0]);
+        rgba[1] = SATURATE_CAST_UCHAR(ptr0[1]);
+        rgba[2] = SATURATE_CAST_UCHAR(ptr0[2]);
+        rgba[3] = SATURATE_CAST_UCHAR(ptr0[3]);
 
         rgba += 4;
-        ptr0++;
-        ptr1++;
-        ptr2++;
-        ptr3++;
+        ptr0 += 4;
     }
 
 #undef SATURATE_CAST_UCHAR
@@ -181,26 +160,22 @@ static void to_rgba(tensor_t *m, unsigned char* rgba)
 static tensor_t from_rgb2bgr(const unsigned char* rgb, int w, int h, allocator_t *allocator)
 {
     tensor_t m = tensor_create_default();
-    tensor_create_3d(&m, w, h, 3, 4u, allocator);
+    tensor_create_3d(&m, 3, w, h, 4u, allocator);
     if (tensor_empty(&m))
         return m;
 
-    float* ptr0 = (float*)tensor_d2(&m, 0).data;
-    float* ptr1 = (float*)tensor_d2(&m, 1).data;
-    float* ptr2 = (float*)tensor_d2(&m, 2).data;
+    float* ptr0 = (float*)m.data;
 
     int size = w * h;
     int remain = size;
     for (; remain>0; remain--)
     {
-        *ptr0 = rgb[2];
-        *ptr1 = rgb[1];
-        *ptr2 = rgb[0];
+        ptr0[0] = rgb[2];
+        ptr0[1] = rgb[1];
+        ptr0[2] = rgb[0];
 
         rgb += 3;
-        ptr0++;
-        ptr1++;
-        ptr2++;
+        ptr0 += 3;
     }
 
     return m;
@@ -208,9 +183,7 @@ static tensor_t from_rgb2bgr(const unsigned char* rgb, int w, int h, allocator_t
 
 static void to_bgr2rgb(tensor_t *m, unsigned char* rgb)
 {
-    const float* ptr0 = (const float*)tensor_d2(m, 0).data;
-    const float* ptr1 = (const float*)tensor_d2(m, 1).data;
-    const float* ptr2 = (const float*)tensor_d2(m, 2).data;;
+    const float* ptr0 = (const float*)m->data;
 
     int size = m->d0 * m->d1;
 
@@ -220,14 +193,12 @@ static void to_bgr2rgb(tensor_t *m, unsigned char* rgb)
 
     for (; remain>0; remain--)
     {
-        rgb[2] = SATURATE_CAST_UCHAR(*ptr0);
-        rgb[1] = SATURATE_CAST_UCHAR(*ptr1);
-        rgb[0] = SATURATE_CAST_UCHAR(*ptr2);
+        rgb[2] = SATURATE_CAST_UCHAR(ptr0[0]);
+        rgb[1] = SATURATE_CAST_UCHAR(ptr0[1]);
+        rgb[0] = SATURATE_CAST_UCHAR(ptr0[2]);
 
         rgb += 3;
-        ptr0++;
-        ptr1++;
-        ptr2++;
+        ptr0 += 3;
     }
 
 #undef SATURATE_CAST_UCHAR
@@ -242,7 +213,7 @@ static tensor_t from_rgb2gray(const unsigned char* rgb, int w, int h, allocator_
     const unsigned char B2Y = 29;
 
     tensor_t m = tensor_create_default();
-    tensor_create_3d(&m, w, h, 1, 4u, allocator);
+    tensor_create_3d(&m, 1, w, h, 4u, allocator);
     if (tensor_empty(&m))
         return m;
 
@@ -270,7 +241,7 @@ static tensor_t from_bgr2gray(const unsigned char* bgr, int w, int h, allocator_
     const unsigned char B2Y = 29;
 
     tensor_t m = tensor_create_default();
-    tensor_create_3d(&m, w, h, 1, 4u, allocator);
+    tensor_create_3d(&m, 1,  w, h, 4u, allocator);
     if (tensor_empty(&m))
         return m;
 
@@ -293,27 +264,22 @@ static tensor_t from_bgr2gray(const unsigned char* bgr, int w, int h, allocator_
 static tensor_t from_gray2rgb(const unsigned char* gray, int w, int h, allocator_t *allocator)
 {
     tensor_t m = tensor_create_default();
-    tensor_create_3d(&m, w, h, 3, 4u, allocator);
+    tensor_create_3d(&m, 3, w, h, 4u, allocator);
     if (tensor_empty(&m))
         return m;
 
-    float* ptr0 = (float*)tensor_d2(&m, 0).data;
-    float* ptr1 = (float*)tensor_d2(&m, 1).data;
-    float* ptr2 = (float*)tensor_d2(&m, 2).data;
-
+    float* ptr0 = (float*)m.data;
     int size = w * h;
 
     int remain = size;
     for (; remain>0; remain--)
     {
-        *ptr0 = *gray;
-        *ptr1 = *gray;
-        *ptr2 = *gray;
+        ptr0[0] = *gray;
+        ptr0[1] = *gray;
+        ptr0[2] = *gray;
 
         gray++;
-        ptr0++;
-        ptr1++;
-        ptr2++;
+        ptr0 += 3;
     }
 
     return m;
@@ -322,26 +288,22 @@ static tensor_t from_gray2rgb(const unsigned char* gray, int w, int h, allocator
 static tensor_t from_rgba2rgb(const unsigned char* rgba, int w, int h, allocator_t *allocator)
 {
     tensor_t m = tensor_create_default();
-    tensor_create_3d(&m, w, h, 3, 4u, allocator);
+    tensor_create_3d(&m, 3, w, h, 4u, allocator);
     if (tensor_empty(&m))
         return m;
 
-    float* ptr0 = (float*)tensor_d2(&m, 0).data;
-    float* ptr1 = (float*)tensor_d2(&m, 1).data;
-    float* ptr2 = (float*)tensor_d2(&m, 2).data;
+    float* ptr0 = (float*)m.data;
 
     int size = w * h;
     int remain = size;
     for (; remain>0; remain--)
     {
-        *ptr0 = rgba[0];
-        *ptr1 = rgba[1];
-        *ptr2 = rgba[2];
+        ptr0[0] = rgba[0];
+        ptr0[1] = rgba[1];
+        ptr0[2] = rgba[2];
 
         rgba += 4;
-        ptr0++;
-        ptr1++;
-        ptr2++;
+        ptr0 += 3;
     }
 
     return m;
@@ -350,27 +312,22 @@ static tensor_t from_rgba2rgb(const unsigned char* rgba, int w, int h, allocator
 static tensor_t from_rgba2bgr(const unsigned char* rgba, int w, int h, allocator_t *allocator)
 {
     tensor_t m = tensor_create_default();
-    tensor_create_3d(&m, w, h, 4, 4u, allocator);
+    tensor_create_3d(&m, 3, w, h, 4u, allocator);
     if (tensor_empty(&m))
         return m;
 
-    float* ptr0 = (float*)tensor_d2(&m, 0).data;
-    float* ptr1 = (float*)tensor_d2(&m, 1).data;
-    float* ptr2 = (float*)tensor_d2(&m, 2).data;
-
+    float* ptr0 = (float*)m.data;
     int size = w * h;
 
     int remain = size;
     for (; remain>0; remain--)
     {
-        *ptr0 = rgba[2];
-        *ptr1 = rgba[1];
-        *ptr2 = rgba[0];
+        ptr0[0] = rgba[2];
+        ptr0[1] = rgba[1];
+        ptr0[2] = rgba[0];
 
         rgba += 4;
-        ptr0++;
-        ptr1++;
-        ptr2++;
+        ptr0 += 3;
     }
 
     return m;
@@ -385,7 +342,7 @@ static tensor_t from_rgba2gray(const unsigned char* rgba, int w, int h, allocato
     const unsigned char B2Y = 29;
 
     tensor_t m = tensor_create_default();
-    tensor_create_3d(&m, w, h, 1, 4u, allocator);
+    tensor_create_3d(&m, 1, w, h, 4u, allocator);
     if (tensor_empty(&m))
         return m;
 
@@ -1346,54 +1303,38 @@ void tensor_to_pixels_resize(tensor_t *tensor, unsigned char* pixels, int type, 
 
 void tensor_substract_mean_normalize(tensor_t *tensor, const float* mean_vals, const float* norm_vals)
 {
-    int size = tensor->d0 * tensor->d1;
-
+    int size = tensor->d2 * tensor->d1;
+    int channels = tensor->d0;
     if (mean_vals && !norm_vals)
     {
-        // substract mean only
-        for (int q=0; q<tensor->d2; q++)
-        {
-            float* ptr = (float*)tensor->data + tensor->step * q;
-            const float mean = mean_vals[q];
-
-            int remain = size;
-            for (; remain>0; remain--)
-            {
-                *ptr -= mean;
-                ptr++;
+        /// only mean
+        float* ptr = (float*)tensor->data;
+        for(int i = 0 ; i < size; i++) {
+            for (int q = 0; q < channels; q++) {
+                ptr[q] -= mean_vals[q];
             }
+            ptr += channels;
         }
     }
     else if (!mean_vals && norm_vals)
     {
-        for (int q=0; q<tensor->d2; q++)
-        {
-            float* ptr = (float*)tensor->data + tensor->step * q;
-            const float norm = norm_vals[q];
-
-            int remain = size;
-            for (; remain>0; remain--)
-            {
-                *ptr *= norm;
-                ptr++;
+        /// only norm
+        float* ptr = (float*)tensor->data;
+        for(int i = 0 ; i < size; i++) {
+            for (int q = 0; q < channels; q++) {
+                ptr[q] *= norm_vals[q];
             }
+            ptr += channels;
         }
     }
     else if (mean_vals && norm_vals)
     {
-        for (int q=0; q<tensor->d2; q++)
-        {
-            float* ptr = (float*)tensor->data + tensor->step * q;
-            const float mean = mean_vals[q];
-            const float norm = norm_vals[q];
-
-
-            int remain = size;
-            for (; remain>0; remain--)
-            {
-                *ptr = (*ptr - mean) * norm;
-                ptr++;
+        float* ptr = (float*)tensor->data;
+        for(int i = 0 ; i < size; i++) {
+            for (int q = 0; q < channels; q++) {
+                ptr[q] = (ptr[q] - mean_vals[q]) * norm_vals[q];
             }
+            ptr += channels;
         }
     }
 }

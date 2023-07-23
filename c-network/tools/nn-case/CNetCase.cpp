@@ -7,6 +7,8 @@
  **/
 
 #include <layer/memorydata.h>
+#include <layer/permute.h>
+#include <layer/reshape.h>
 #include "CNetCase.h"
 #include "QuantizeData.h"
 #include "CNetLayerCase.h"
@@ -171,7 +173,7 @@ bool CNetCase::load_blob_scales(const char* filename)
 bool CNetCase::fix_blob_scales() {
     for (auto layer : layers) {
        if(layer->type == "MemoryData"){
-           ncnn::MemoryData *md = dynamic_cast<ncnn::MemoryData *>(layer);
+           auto *md = dynamic_cast<ncnn::MemoryData *>(layer);
            blob_scale_table[blobs[md->tops[0]].name] = quantize->get_scaled(md->data);
        }
     }
@@ -200,10 +202,20 @@ bool CNetCase::transform(const char* hpp_path, const char* cpp_path) {
 
 std::string CNetCase::get_blob_input_name(const ncnn::Layer* layer, int input, bool used)
 {
+
     if (layers[blobs[layer->bottoms[input]].producer]->type == "Split") {
         return get_blob_input_name(layers[blobs[layer->bottoms[input]].producer], 0, used);
     }
     else {
+
+        if(layers[blobs[layer->bottoms[input]].producer]->type == "Permute" && layer->type == "Reshape"){
+            const auto* permute = dynamic_cast<const ncnn::Permute*>(layers[blobs[layer->bottoms[input]].producer]);
+            const auto* reshape = dynamic_cast<const ncnn::Reshape*>(layer);
+            if(permute->order_type == 3 && reshape->ndim <= 2){
+                return get_blob_input_name(layers[blobs[layer->bottoms[input]].producer], 0, used);
+            }
+        }
+
         auto blob = blobs[layer->bottoms[input]];
         std::string inputName = "blob_" + layers[blob.producer]->name + "_" + blob.name;
         sanitize_name(inputName);
@@ -334,9 +346,9 @@ void CNetCase::generate_network_info(FILE *cpp, const std::string &network_name)
         }
         fprintf(cpp, "\tBLOB_INSTANCE(%d, %d, %d, %d, %d, %d, %f), \n",
                 blob.second.shape[0],
-                blob.second.shape[1],
                 blob.second.shape[2],
                 blob.second.shape[3],
+                blob.second.shape[1],
                 blob.second.data_type,
                 blob.second.consumers_count,
                 blob.second.scale);

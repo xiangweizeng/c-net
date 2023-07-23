@@ -122,16 +122,15 @@ vector_int lpr_recognizer_decode(tensor_t *output)
     int prev_class_idx = -1;
     vector_int codes = VECTOR_CREATE(int, 0);
 
-    for (int t = 0; t < output->d2; t++)
+    float *current_code = output->data;
+    for (int t = 0; t < output->d1; t++)
     {
-
-        float *current_code = (float*)tensor_d2(output, t).data;
 
         float max_prob = *current_code;
         int max_class_idx = 0;
 
         current_code++;
-        for (int c = 1; c < output->d1; c++, current_code++)
+        for (int c = 1; c < output->d0; c++, current_code++)
         {
             if (*current_code > max_prob)
             {

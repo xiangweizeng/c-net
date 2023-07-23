@@ -23,12 +23,22 @@ bool InnerProductCase::quantize_weights() {
     std::string input = get_blob_input_name(0);
     std::string output = get_blob_output_name(0);
 
-    ncnn::InnerProduct *ip = dynamic_cast<ncnn::InnerProduct *>(layer);
+    auto *ip = dynamic_cast<ncnn::InnerProduct *>(layer);
 
     float output_scale = case_blobs[output].scale;
     float weight_scale = quantize->get_scaled(ip->weight_data);
     std::string param_var = "layer_" + ip->name + "_inner_product_filters";
-    quantize_data_weights[param_var] = quantize->do_quantize(ip->weight_data, weight_scale);
+    auto quantize_data = quantize->do_quantize(ip->weight_data, weight_scale);
+
+    if(ip->bottom_shapes[0].dims == 3){
+        int n = ip->num_output;
+        int h = (int)ip->bottom_shapes[0].h;
+        int w = (int)ip->bottom_shapes[0].w;
+        int c = (int)ip->bottom_shapes[0].c;
+
+        quantize_data = quantize->permute(quantize_data, n, h, w, c);
+    }
+    quantize_data_weights[param_var] = quantize_data;
 
     param_var = "layer_" + ip->name + "_inner_product_bias";
     if (ip->bias_term) {

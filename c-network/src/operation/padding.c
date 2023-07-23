@@ -12,10 +12,14 @@
 
 FUNCTION_IRAM static void copy_make_border_image_int8(
         tensor_t *src, tensor_t *dst,
-        int top, int left, int type, int8_t v) {
+        int top,
+        int left,
+        int type,
+        int8_t v) {
 
-    int w = dst->d0;
-    int h = dst->d1;
+    int w = dst->d1;
+    int h = dst->d2;
+    int c = dst->d0;
 
     const int8_t *ptr = (int8_t *) src->data;
     int8_t *out_ptr = (int8_t *) dst->data;
@@ -23,44 +27,31 @@ FUNCTION_IRAM static void copy_make_border_image_int8(
     if (type == 0) {
         int y = 0;
 
-        // fill top
-        for (; y < top; y++) {
-            int x = 0;
-            for (; x < w; x++) {
-                out_ptr[x] = v;
-            }
-            out_ptr += w;
-        }
+        /// fill top
+        y = y + top - 1;
+        memset(out_ptr, v, top * w * c);
+        out_ptr += top * w * c;
 
-        // fill center
+        /// fill center
         for (; y < (top + src->d1); y++) {
             int x = 0;
-            for (; x < left; x++) {
-                out_ptr[x] = v;
-            }
-            if (src->d0 < 12) {
-                for (; x < (left + src->d0); x++) {
-                    out_ptr[x] = ptr[x - left];
-                }
-            } else {
-                memcpy(out_ptr + left, ptr, src->d0 * sizeof(int8_t));
-                x += src->d0;
-            }
-            for (; x < w; x++) {
-                out_ptr[x] = v;
-            }
-            ptr += src->d0;
-            out_ptr += w;
+
+            memset(out_ptr, v, c * left);
+            out_ptr += c * left;
+            x += left;
+
+            memcpy(out_ptr, ptr, c * src->d1);
+            out_ptr += c * src->d1;
+            x += src->d1;
+
+            int right = w - x;
+            memset(out_ptr, v, c * right);
+            out_ptr += c * right;
         }
 
-        // fill bottom
-        for (; y < h; y++) {
-            int x = 0;
-            for (; x < w; x++) {
-                out_ptr[x] = v;
-            }
-            out_ptr += w;
-        }
+        /// fill bottom
+        int bottom = h - y;
+        memset(out_ptr, v, bottom * w * c);
     } else if (type == 1) {
         int y = 0;
 
@@ -70,6 +61,7 @@ FUNCTION_IRAM static void copy_make_border_image_int8(
             for (; x < left; x++) {
                 out_ptr[x] = ptr[0];
             }
+
             if (src->d0 < 12) {
                 for (; x < (left + src->d0); x++) {
                     out_ptr[x] = ptr[x - left];
@@ -78,6 +70,7 @@ FUNCTION_IRAM static void copy_make_border_image_int8(
                 memcpy(out_ptr + left, ptr, src->d0 * sizeof(int8_t));
                 x += src->d0;
             }
+
             for (; x < w; x++) {
                 out_ptr[x] = ptr[src->d0 - 1];
             }

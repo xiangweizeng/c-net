@@ -64,7 +64,7 @@ static std::vector<int> get_conv_padding(ConvType* convolution, int w, int h)
 
 
 template<class Conv>
-bool ConvolutionCase::quantize_convolution(const Conv* convolution)
+bool ConvolutionCase::quantize_convolution(const Conv* convolution, int group)
 {
     std::string input = get_blob_input_name(0);
     std::string output = get_blob_output_name(0);
@@ -72,7 +72,30 @@ bool ConvolutionCase::quantize_convolution(const Conv* convolution)
     float output_scale = case_blobs[output].scale;
     float weight_scale = quantize->get_scaled(convolution->weight_data);
     std::string param_var = "layer_" + convolution->name + "_convolution_filters";
-    quantize_data_weights[param_var] = quantize->do_quantize(convolution->weight_data, weight_scale);
+    ncnn::Mat quantize_data = quantize->do_quantize(convolution->weight_data, weight_scale);
+    if(group == 1){
+        quantize_data_weights[param_var] = quantize->permute(
+                quantize_data,
+                convolution->num_output,
+                convolution->kernel_h,
+                convolution->kernel_w,
+                (int)convolution->bottom_shapes[0].c);
+    } else{
+
+        int n = convolution->num_output / group;
+        int h = convolution->kernel_h;
+        int w = convolution->kernel_w;
+        int c = (int)convolution->bottom_shapes[0].c / group;
+        int group_filters_size = n * h * w * c;
+
+        for(int g = 0; g < group; g++){
+            auto group_mat = quantize_data.range(g * group_filters_size, group_filters_size);
+            auto permute_mat = quantize->permute(group_mat, n, h, w, c);
+            memcpy(group_mat.data, permute_mat.data, group_filters_size * group_mat.elemsize);
+        }
+
+        quantize_data_weights[param_var] = quantize_data;
+    }
 
     param_var = "layer_" + convolution->name + "_convolution_bias";
     if (convolution->bias_term) {
@@ -145,9 +168,9 @@ bool ConvolutionCase::case_convolution(const Conv* convolution, int group, std::
             " %d, %d, %d, %d, %d, %d, %d);\n",
             convolution->name.c_str(),
             convolution->num_output,
-            (int)convolution->bottom_shapes[0].c,
             convolution->kernel_h,
             convolution->kernel_w,
+            (int)convolution->bottom_shapes[0].c,
             group,
             convolution->stride_w, convolution->stride_h, convolution->dilation_w, convolution->dilation_h,
             padding[0], padding[1], padding[2], padding[3], pad_value,
@@ -165,11 +188,11 @@ bool ConvolutionCase::ignore() {
 bool ConvolutionCase::quantize_weights() {
     if (layer->type == "Convolution") {
         const auto* convolution = dynamic_cast<const ncnn::Convolution*>(layer);
-        return quantize_convolution(convolution);
+        return quantize_convolution(convolution, 1);
     }
     else if (layer->type == "ConvolutionDepthWise") {
         const auto* convolution = dynamic_cast<const ncnn::ConvolutionDepthWise*>(layer);
-        return quantize_convolution(convolution);
+        return quantize_convolution(convolution, convolution->group);
     }
     return false;
 }

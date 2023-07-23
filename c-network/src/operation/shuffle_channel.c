@@ -33,7 +33,6 @@ FUNCTION_IRAM static int shuffle_channel_forward(
         return CNET_STATUS_FAILED;
     }
 
-
     const size_t feature_sz = w * h * elem_size;
     for (int i = 0; i != group; i++)
     {

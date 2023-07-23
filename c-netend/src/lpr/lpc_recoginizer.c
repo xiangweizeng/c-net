@@ -55,6 +55,7 @@ plate_color_t  lpc_recognizer_predict_color(lpc_recognizer_t *lpc, tensor_t *pla
         return PLATE_COLOR_UNKNOWN;
     }
 
+    tensor_print(&probs_blob);
     float *probs = (float*)probs_blob.data;
     float max = probs[0];
     int clsId = 0;

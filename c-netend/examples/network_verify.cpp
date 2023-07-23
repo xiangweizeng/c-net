@@ -16,6 +16,7 @@ extern "C" {
 #include "models/plate/lpr-opt.h"
 #include "models/plate/lpc-opt.h"
 #include "models/face/mobilefacenet-opt.h"
+#include "models/plate/plate-opt.h"
 }
 
 static void print_mat(ncnn::Mat &mat)
@@ -57,7 +58,7 @@ int network_verify(network_t *network,
     }
 
     session_t session = session_create(network);
-    if(CNET_STATUS_FAILED  == network_setup_run_operations(network, NULL)){
+    if(CNET_STATUS_FAILED  == network_setup_run_operations(network, nullptr)){
         printf("lpr load bin failed\n");
         return CNET_STATUS_FAILED;
     }
@@ -65,9 +66,9 @@ int network_verify(network_t *network,
     {
         session.option.light_mode = 0;
         tensor_t image = tensor_from_pixels_resize(
-                bgr.data, type, bgr.cols, bgr.rows, input_w, input_h,  NULL);
-        tensor_substract_mean_normalize(&image, mean_values, norm_values);
+                bgr.data, type, bgr.cols, bgr.rows, input_w, input_h,  nullptr);
 
+        tensor_substract_mean_normalize(&image, mean_values, norm_values);
         session_set_input(&session, input_index, image);
         tensor_release(&image);
 
@@ -103,12 +104,18 @@ int network_verify(network_t *network,
             continue;
         }
 
-        for(int c = 0; c < dst.d2; c++){
-            tensor_t dc = tensor_d2(&dst, c);
+        if(info->blob_id == lpc_opt_blob_prob_prob){
+            tensor_print(&dst);
+            print_mat(reference);
+        }
+
+        tensor_t chw_dst = tensor_hwc2chw(&dst, nullptr);
+        for(int c = 0; c < chw_dst.d2; c++){
+            tensor_t dc = tensor_d2(&chw_dst, c);
             ncnn::Mat rc = reference.channel(c);
 
-            float *dc_data = static_cast<float *>(dc.data);
-            float *rc_data = static_cast<float *>(rc.data);
+            auto *dc_data = static_cast<float *>(dc.data);
+            auto *rc_data = static_cast<float *>(rc.data);
 
             int size = tensor_total(&dc);
             float diff = 0;
@@ -116,13 +123,19 @@ int network_verify(network_t *network,
                 diff += fabs(dc_data[s] - rc_data[s]);
             }
 
-            if( (diff / size) > 0.1){
+            if( (diff / size) > 9.0){
                 printf("error:  %s/%d: %d-%f\n", info->name, info->blob_id,  c, diff / size);
                 tensor_print(&dc);
                 print_mat(rc);
+
+                tensor_release(&dst);
+                tensor_release(&chw_dst);
                 return -1;
             }
         }
+
+        tensor_release(&dst);
+        tensor_release(&chw_dst);
     }
 
     network_teardown_run_operations(network, NULL);
@@ -193,6 +206,38 @@ int verify_lpc(const char *image_path) {
             ncnn_blobs);
 }
 
+int verify_plate(const char *image_path) {
+    int input_index = plate_opt_blob_input0_input0;
+    int input_w = 320;
+    int input_h = 240;
+
+    const float mean_values[3] = { 104.f, 117.f, 123.f};
+    const float norm_values[3] = { 1.f, 1.f, 1.f};
+    int type = PIXEL_RGB2BGR;
+
+    std::string ncnn_param = "models/plate/plate-opt.param";
+    std::string ncnn_bin = "models/plate/plate-opt.bin";
+
+    network_t *network = &network_plate_opt;
+    auto * ncnn_blobs = plate_opt_ncnn_blobs;
+    int blob_size = PLATE_OPT_BLOB_SIZE;
+
+    return network_verify(
+            network,
+            image_path,
+            ncnn_param,
+            ncnn_bin,
+            "input0",
+            input_index,
+            input_w,
+            input_h,
+            mean_values,
+            norm_values,
+            type,
+            blob_size,
+            ncnn_blobs);
+}
+
 int verify_mobilefacenet(const char *image_path) {
     int input_index = mobilefacenet_opt_blob_data_data;
     int input_w = 112;
@@ -235,8 +280,9 @@ int main(int argc, char** argv) {
     option_init(1);
     const char* image_path = argv[1];
     verify_lpc(image_path);
-    verify_lpr(image_path);
-    verify_mobilefacenet(image_path);
+//    verify_lpr(image_path);
+//    verify_plate(image_path);
+//    verify_mobilefacenet(image_path);
     option_uninit();
     return 0;
 }

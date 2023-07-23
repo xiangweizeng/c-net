@@ -224,11 +224,11 @@ static softmax_t layer_##name##_softmax = {             \
 #define PERMUTE_ORDER0      { 0, 1, 2, 3 }
 #define PERMUTE_ORDER1      { 0, 1, 3, 2 }
 #define PERMUTE_ORDER2      { 0, 1, 2, 3 }
-#define PERMUTE_ORDER3      { 0, 1, 3, 2 }
-#define PERMUTE_ORDER4      { 0, 2, 1, 3 }
+#define PERMUTE_ORDER3      { 0, 2, 1, 3 }
+#define PERMUTE_ORDER4      { 0, 3, 2, 1 }
 #define PERMUTE_ORDER5      { 0, 2, 3, 1 }
 #define PERMUTE_ORDER6      { 0, 3, 1, 2 }
-#define PERMUTE_ORDER7      { 0, 3, 2, 1 }
+#define PERMUTE_ORDER7      { 0, 1, 3, 2 }
 #define DEFINE_PERMUTE_LAYER(name, axis_index)          \
 static permute_t layer_##name##_permute = {             \
         .config ={                                      \

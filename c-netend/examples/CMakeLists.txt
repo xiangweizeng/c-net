@@ -50,6 +50,7 @@ add_executable(network_verify
         network_verify.cpp
         models/plate/lpr-opt.c
         models/plate/lpc-opt.c
+        models/plate/plate-opt.c
         models/face/mobilefacenet-opt.c
         )
 target_include_directories(network_verify PRIVATE ${OpenCV_INCLUDE_DIRS})

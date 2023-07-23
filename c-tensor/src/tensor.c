@@ -10,6 +10,7 @@
 #include "tensor.h"
 #include "container_vector.h"
 #include <stdio.h>
+#include <option.h>
 
 /**
  * vector impl for tensor_t
@@ -34,7 +35,7 @@ tensor_t tensor_create_default()
     tensor.step = 0;
     tensor.refcount = NULL;
     tensor.elem_size = 0;
-    tensor.layout = TENSOR_LAYOUT_NCHW;
+    tensor.layout = TENSOR_LAYOUT_NHWC;
     tensor.allocator = NULL;
     tensor.data_type = TENSOR_DATA_FLOAT;
     return  tensor;
@@ -174,11 +175,11 @@ void tensor_print(tensor_t *tensor){
         if (TENSOR_DATA_FLOAT == tensor->data_type) {
             printf("\n");
             float *data = (float *) tensor->data;
-            for (int c = 0; c < tensor->d2; c++) {
+            for (int c = 0; c < tensor->d0; c++) {
                 printf("channel %d\n", c);
-                for (int h = 0; h < tensor->d1; h++) {
-                    for (int w = 0; w < tensor->d0; w++) {
-                        printf("%f,", data[(h * tensor->d0 + w) * tensor->d2 + c]);
+                for (int h = 0; h < tensor->d2; h++) {
+                    for (int w = 0; w < tensor->d1; w++) {
+                        printf("%f,", data[(h * tensor->d1 + w) * tensor->d0 + c]);
                     }
 
                     printf("\n");
@@ -186,28 +187,28 @@ void tensor_print(tensor_t *tensor){
             }
             printf("\n");
 
+        } else if (TENSOR_DATA_INT16 == tensor->data_type) {
+            printf("\n");
+            uint16_t *data = tensor->data;
+            for (int c = 0; c < tensor->d0; c++) {
+                printf("channel %d\n", c);
+                for (int h = 0; h < tensor->d2; h++) {
+                    for (int w = 0; w < tensor->d1; w++) {
+                        printf("%d,", data[(h * tensor->d1 + w) * tensor->d0 + c]);
+                    }
+
+                    printf("\n");
+                }
+            }
+            printf("\n");
         } else if (TENSOR_DATA_INT8 == tensor->data_type) {
             printf("\n");
-            char *data = tensor->data;
+            int8_t *data = tensor->data;
             for (int c = 0; c < tensor->d2; c++) {
                 printf("channel %d\n", c);
-                for (int h = 0; h < tensor->d1; h++) {
-                    for (int w = 0; w < tensor->d0; w++) {
-                        printf("%d,", data[(h * tensor->d0 + w) * tensor->d2 + c]);
-                    }
-
-                    printf("\n");
-                }
-            }
-            printf("\n");
-        } else if (TENSOR_DATA_UINT8 == tensor->data_type) {
-            printf("\n");
-            uint8_t *data = tensor->data;
-            for (int c = 0; c < tensor->d2; c++) {
-                printf("channel %d\n", c);
-                for (int h = 0; h < tensor->d1; h++) {
-                    for (int w = 0; w < tensor->d0; w++) {
-                        printf("%d,", data[(h * tensor->d0 + w) * tensor->d2 + c]);
+                for (int h = 0; h < tensor->d2; h++) {
+                    for (int w = 0; w < tensor->d1; w++) {
+                        printf("%d,", data[(h * tensor->d1 + w) * tensor->d0 + c]);
                     }
 
                     printf("\n");
@@ -349,7 +350,7 @@ tensor_t tensor_reshape_3d(tensor_t *tensor, int w, int h, int c) {
 
 void tensor_create_1d(tensor_t *tensor, int w, size_t elem_size, allocator_t *allocator) {
     if (tensor->dims == 1 && tensor->d0 == w && tensor->elem_size == elem_size &&
-        tensor->layout == TENSOR_LAYOUT_NCHW && allocator == tensor->allocator){
+        tensor->layout == TENSOR_LAYOUT_NHWC && allocator == tensor->allocator){
         return;
     }
 
@@ -362,7 +363,7 @@ void tensor_create_1d(tensor_t *tensor, int w, size_t elem_size, allocator_t *al
     tensor->d1 = 1;
     tensor->d2 = 1;
     tensor->d3 = 1;
-    tensor->layout = TENSOR_LAYOUT_NCHW;
+    tensor->layout = TENSOR_LAYOUT_NHWC;
 
     tensor->step = w;
 
@@ -385,7 +386,7 @@ void tensor_create_1d(tensor_t *tensor, int w, size_t elem_size, allocator_t *al
 void tensor_create_2d(tensor_t *tensor, int w, int h, size_t elem_size, allocator_t *allocator) {
 
     if (tensor->dims == 2 && tensor->d0 == w && tensor->d1 == h && tensor->elem_size == elem_size
-        && tensor->layout == TENSOR_LAYOUT_NCHW && allocator == tensor->allocator){
+        && tensor->layout == TENSOR_LAYOUT_NHWC && allocator == tensor->allocator){
         return;
     }
 
@@ -398,7 +399,7 @@ void tensor_create_2d(tensor_t *tensor, int w, int h, size_t elem_size, allocato
     tensor->d1 = h;
     tensor->d2 = 1;
     tensor->d3 = 1;
-    tensor->layout = TENSOR_LAYOUT_NCHW;
+    tensor->layout = TENSOR_LAYOUT_NHWC;
 
     tensor->step = w * h;
 
@@ -420,7 +421,7 @@ void tensor_create_2d(tensor_t *tensor, int w, int h, size_t elem_size, allocato
 // allocate dim
 void tensor_create_3d(tensor_t *tensor, int w, int h, int c, size_t elem_size, allocator_t *allocator) {
     if (tensor->dims == 3 && tensor->d0 == w && tensor->d1 == h && tensor->d2 == c
-        && tensor->layout == TENSOR_LAYOUT_NCHW && tensor->elem_size == elem_size && tensor->allocator == allocator){
+        && tensor->layout == TENSOR_LAYOUT_NHWC && tensor->elem_size == elem_size && tensor->allocator == allocator){
            return;
     }
 
@@ -433,7 +434,7 @@ void tensor_create_3d(tensor_t *tensor, int w, int h, int c, size_t elem_size, a
     tensor->d1 = h;
     tensor->d2 = c;
     tensor->d3 = 1;
-    tensor->layout = TENSOR_LAYOUT_NCHW;
+    tensor->layout = TENSOR_LAYOUT_NHWC;
 
     tensor->step = align_size(w * h * elem_size, elem_size) / elem_size;
 
@@ -463,7 +464,7 @@ void tensor_create_1d_data(tensor_t *tensor, int w, void *data, size_t elem_size
     tensor->refcount = 0;
     tensor->step = w;
     tensor->d3 = 1;
-    tensor->layout = TENSOR_LAYOUT_NCHW;
+    tensor->layout = TENSOR_LAYOUT_NHWC;
 }
 
 // allocate image
@@ -479,7 +480,7 @@ void tensor_create_2d_data(tensor_t *tensor, int w, int h, void *data, size_t el
     tensor->refcount = 0;
     tensor->step = w * h;
     tensor->d3 = 1;
-    tensor->layout = TENSOR_LAYOUT_NCHW;
+    tensor->layout = TENSOR_LAYOUT_NHWC;
 }
 
 // allocate dim
@@ -495,7 +496,7 @@ void tensor_create_3d_data(tensor_t *tensor, int w, int h, int c, void *data, si
     tensor->refcount = 0;
     tensor->step = w * h;
     tensor->d3 = 1;
-    tensor->layout = TENSOR_LAYOUT_NCHW;
+    tensor->layout = TENSOR_LAYOUT_NHWC;
 }
 
 void tensor_create_like(tensor_t *tensor, const tensor_t *like, size_t element_size, allocator_t *allocator) {
@@ -528,7 +529,7 @@ void tensor_release(tensor_t *tensor) {
     tensor->d1 = 0;
     tensor->d2 = 0;
     tensor->d3 = 0;
-    tensor->layout = TENSOR_LAYOUT_NCHW;
+    tensor->layout = TENSOR_LAYOUT_NHWC;
 
     tensor->step = 0;
 
@@ -632,4 +633,114 @@ tensor_t tensor_from_float16(const unsigned short *data, int size, allocator_t *
     }
 
     return m;
+}
+
+FUNCTION_IRAM tensor_t tensor_chw2hwc(tensor_t *chw, option_t *opt)
+{
+    if(chw->layout != TENSOR_LAYOUT_NCHW){
+        tensor_add_ref(chw);
+        return *chw;
+    }
+
+    int h = chw->d1;
+    int w = chw->d0;
+    int c = chw->d2;
+    int c_step = w * h;
+
+    tensor_t hwc = tensor_create_default();
+    tensor_create_3d(&hwc, c, w, h, chw->elem_size, NULL);
+    hwc.layout = TENSOR_LAYOUT_NHWC;
+
+    if(chw->elem_size == 1){
+        uint8_t *input = (uint8_t*)chw->data;
+        for (int h_ = 0; h_ < h; h_++) {
+            uint8_t *output = (uint8_t*)hwc.data + h_*w*c;
+            for (int w_ = 0; w_ < w; w_++) {
+                for (int c_ = 0; c_ < c; c_++) {
+                    uint8_t *input_c = input + c_*c_step + h_*w + w_;
+                    *output++ = *input_c;
+                }
+            }
+        }
+
+    } else if(chw->elem_size == 2){
+        uint16_t *input = (uint16_t*)chw->data;
+        for (int h_ = 0; h_ < h; h_++) {
+            uint8_t *output = (uint8_t*)hwc.data + h_*w*c;
+            for (int w_ = 0; w_ < w; w_++) {
+                for (int c_ = 0; c_ < c; c_++) {
+                    uint16_t *input_c = input + c_*c_step + h_*w + w_;
+                    *output++ = *input_c;
+                }
+            }
+        }
+    }else if(chw->elem_size == 4){
+        uint32_t *input = (uint32_t*)chw->data;
+        for (int h_ = 0; h_ < h; h_++) {
+            uint32_t *output = (uint32_t*)hwc.data + h_*w*c;
+            for (int w_ = 0; w_ < w; w_++) {
+                for (int c_ = 0; c_ < c; c_++) {
+                    uint32_t *input_c = input + c_*c_step + h_*w + w_;
+                    *output++ = *input_c;
+                }
+            }
+        }
+    }
+
+    return hwc;
+}
+
+
+FUNCTION_IRAM tensor_t tensor_hwc2chw(tensor_t *hwc, option_t *opt)
+{
+    if(hwc->layout != TENSOR_LAYOUT_NHWC){
+        tensor_add_ref(hwc);
+        return *hwc;
+    }
+
+    int h = hwc->d2;
+    int w = hwc->d1;
+    int c = hwc->d0;
+    int c_step = w * c;
+
+    tensor_t chw = tensor_create_default();
+    tensor_create_3d(&chw, w, h, c, hwc->elem_size, NULL);
+    chw.layout = TENSOR_LAYOUT_NCHW;
+
+    if(hwc->elem_size == 1){
+        uint8_t *input = (uint8_t*)hwc->data;
+        for (int c_ = 0; c_ < c; c_++) {
+            uint8_t *output = (uint8_t *) hwc->data + c_ * w * h;
+            for (int h_ = 0; h_ < h; h_++) {
+                for (int w_ = 0; w_ < w; w_++) {
+                    uint8_t *input_c = input + h_ * c_step + w_ * c + c_;
+                    *output++ = *input_c;
+                }
+            }
+        }
+    } else if(hwc->elem_size == 2){
+        uint16_t *input = (uint16_t*)hwc->data;
+        for (int c_ = 0; c_ < c; c_++) {
+            uint16_t *output = (uint16_t *) hwc->data + c_ * w * h;
+            for (int h_ = 0; h_ < h; h_++) {
+                for (int w_ = 0; w_ < w; w_++) {
+                    uint16_t *input_c = input + h_ * c_step + w_ * c + c_;
+                    *output++ = *input_c;
+                }
+            }
+        }
+    }else if(hwc->elem_size == 4){
+        uint32_t *input = (uint32_t*)hwc->data;
+        for (int c_ = 0; c_ < c; c_++) {
+            uint32_t *output = (uint32_t *) chw.data + c_ * w * h;
+            for (int h_ = 0; h_ < h; h_++) {
+                for (int w_ = 0; w_ < w; w_++) {
+                    uint32_t *input_c = input + h_ * c_step + w_ * c + c_;
+                    *output++ = *input_c;
+                }
+            }
+        }
+    }
+
+    return chw;
 }

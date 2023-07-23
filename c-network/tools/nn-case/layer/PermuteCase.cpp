@@ -9,12 +9,25 @@
 
 
 #include <layer/permute.h>
+#include <layer/reshape.h>
 #include "PermuteCase.h"
 
 PermuteCase::PermuteCase(CNetCase* network, ncnn::Layer *layer)
         : CNetLayerCase(network, layer) {}
 
 bool PermuteCase::ignore() {
+    const auto* permute = dynamic_cast<const ncnn::Permute*>(layer);
+
+    if(blobs[layer->tops[0]].consumer <= 0){
+        return true;
+    }
+
+    if(blobs[layer->tops[0]].consumer >= 0 && layers[blobs[layer->tops[0]].consumer]->type == "Reshape"){
+        const auto* reshape = dynamic_cast<const ncnn::Reshape*>(layers[blobs[layer->tops[0]].consumer]);
+        if(permute->order_type == 3 && reshape->ndim <= 2){
+            return true;
+        }
+    }
     return false;
 }
 
