@@ -41,14 +41,14 @@ typedef struct retina_face_config{
     int land_type; /// 0 face, 1 plate
     int width;
     int height;
-}retina_face_config;
+}retina_face_config_t;
 
 /**
  * Create retina face
  * @param config
  * @return
  */
-retina_face_t retina_face_create(retina_face_config config);
+retina_face_t retina_face_create(retina_face_config_t config);
 
 /**
  * Release retina face

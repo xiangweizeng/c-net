@@ -90,7 +90,7 @@ static vector_box_t create_anchor_retina_face(int w, int h) {
 }
 
 
-retina_face_t retina_face_create(retina_face_config config)
+retina_face_t retina_face_create(retina_face_config_t config)
 {
     retina_face_t face;
     face.threshold = config.threshold;

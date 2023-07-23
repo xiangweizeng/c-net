@@ -1,6 +1,8 @@
 
-cmake_minimum_required(VERSION 3.0)
-project(c-net C)
+option(ENABLE_STB_IMAGE "enable stb image" OFF)
+option(ENABLE_ESP32 "enable esp32 build" ON)
+option(ENABLE_POSIX_PORTS "enable posix ports supported" OFF)
+option(ENABLE_DEBUG_MEMORY "enable debug memory allocation" ON)
 
 add_definitions(-Wall -Wno-unused-function)
 #add_definitions(-Wall -Wno-unused-function -Ofast)
