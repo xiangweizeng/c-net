@@ -18,6 +18,9 @@ FUNCTION_IRAM static int batch_norm_forward_one_inplace(batch_norm_t *batch_norm
     int16_t *b_data = batch_norm->scale.data.data;
     fixed_mul_t requantize = batch_norm->config.requantize;
 
+    int group =  top->blob->shape[1] * top->blob->shape[2];
+    int group_size = top->blob->shape[3];
+
     int dims = tensor->dims;
     if (dims == 1)
     {
@@ -79,9 +82,27 @@ FUNCTION_IRAM static int batch_norm_forward(
         option_t *opt) {
 
     batch_norm_t *batch_norm = (batch_norm_t *) operation->base;
-    tensor_t *top_tensor = &top_tensors->data[0].data;
+    blob_container_t *top = &top_tensors->data[0];
 
-    return batch_norm_forward_one_inplace(batch_norm, top_tensor, opt);
+    int16_t *a_data = batch_norm->offset.data.data;
+    int16_t *b_data = batch_norm->scale.data.data;
+    fixed_mul_t requantize = batch_norm->config.requantize;
+
+    int group =  top->blob->shape[1] * top->blob->shape[2];
+    int group_size = top->blob->shape[3];
+    int16_t *ptr = top->data.data;
+
+    for(int s = 0; s < group; s ++){
+        for(int j = 0; j < group_size; j++){
+            int16_t a = a_data[j];
+            int16_t b = b_data[j];
+            int32_t v = b * ptr[j];
+            ptr[j] = REQUANTIZE_BIAS(v, requantize, a);
+        }
+        ptr += group_size;
+    }
+
+    return CNET_STATUS_SUCCESS;
 }
 
 IMPL_OPERATION_CREATOR(batch_norm) {
@@ -93,5 +114,6 @@ IMPL_OPERATION_CREATOR(batch_norm) {
 
     operation_basic_info_setup(batch_norm);
     batch_norm->forward = batch_norm_forward;
+    batch_norm->support_inplace = 1;
     return (operation_ptr) batch_norm;
 }

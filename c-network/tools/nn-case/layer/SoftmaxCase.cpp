@@ -25,6 +25,13 @@ bool SoftmaxCase::quantize_weights() {
 bool SoftmaxCase::get_layer_define(std::string &layer_define) {
     const auto* softmax = dynamic_cast<const ncnn::Softmax*>(layer);
     int axis = softmax->axis + 4 - softmax->bottom_shapes[0].dims;
+    if(axis == 1){
+        axis = 3;
+    }else if (axis == 2){
+        axis = 1;
+    } else if(axis == 3){
+        axis = 2;
+    }
 
     char buffer[1024] = {0};
     sprintf(buffer, "DEFINE_SOFTMAX_LAYER(%s,%d);\n", softmax->name.c_str(), axis);

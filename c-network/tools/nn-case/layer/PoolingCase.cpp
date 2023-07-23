@@ -78,7 +78,7 @@ bool PoolingCase::get_layer_define(std::string &layer_define) {
     std::string input = get_blob_input_name(0);
     std::string output = get_blob_output_name(0);
 
-    ncnn::Pooling *pool = dynamic_cast<ncnn::Pooling *>(layer);
+    auto *pool = dynamic_cast<ncnn::Pooling *>(layer);
     int inw = (int)pool->bottom_shapes[0].w;
     int inh = (int)pool->bottom_shapes[0].h;
 

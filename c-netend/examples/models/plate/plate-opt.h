@@ -39,56 +39,44 @@
 #define plate_opt_blob_278_279 27
 #define plate_opt_blob_280_281 28
 #define plate_opt_blob_282_282 29
-#define plate_opt_blob_283_283 30
-#define plate_opt_blob_284_285 31
-#define plate_opt_blob_286_286 32
-#define plate_opt_blob_287_287 33
-#define plate_opt_blob_288_289 34
-#define plate_opt_blob_290_290 35
-#define plate_opt_blob_291_291 36
-#define plate_opt_blob_292_293 37
-#define plate_opt_blob_294_294 38
-#define plate_opt_blob_295_295 39
-#define plate_opt_blob_296_297 40
-#define plate_opt_blob_298_298 41
-#define plate_opt_blob_299_299 42
-#define plate_opt_blob_300_301 43
-#define plate_opt_blob_302_302 44
-#define plate_opt_blob_303_303 45
-#define plate_opt_blob_304_305 46
-#define plate_opt_blob_306_306 47
-#define plate_opt_blob_307_307 48
-#define plate_opt_blob_308_309 49
-#define plate_opt_blob_310_310 50
-#define plate_opt_blob_311_311 51
-#define plate_opt_blob_312_313 52
-#define plate_opt_blob_314_314 53
-#define plate_opt_blob_315_315 54
-#define plate_opt_blob_316_316 55
-#define plate_opt_blob_317_317 56
-#define plate_opt_blob_318_318 57
-#define plate_opt_blob_319_319 58
-#define plate_opt_blob_320_320 59
-#define plate_opt_blob_321_321 60
-#define plate_opt_blob_331_331 61
-#define plate_opt_blob_341_341 62
-#define plate_opt_blob_351_351 63
-#define plate_opt_blob_361_361 64
-#define plate_opt_blob_372_372 65
-#define plate_opt_blob_382_382 66
-#define plate_opt_blob_392_392 67
-#define plate_opt_blob_402_402 68
-#define plate_opt_blob_403_403 69
-#define plate_opt_blob_413_413 70
-#define plate_opt_blob_423_423 71
-#define plate_opt_blob_433_433 72
-#define plate_opt_blob_443_443 73
-#define plate_opt_blob_444_529 74
-#define plate_opt_blob_445_530 75
-#define plate_opt_blob_input0_input0 76
-#define plate_opt_blob_output0_output0 77
+#define plate_opt_blob_284_285 30
+#define plate_opt_blob_286_286 31
+#define plate_opt_blob_288_289 32
+#define plate_opt_blob_290_290 33
+#define plate_opt_blob_292_293 34
+#define plate_opt_blob_294_294 35
+#define plate_opt_blob_296_297 36
+#define plate_opt_blob_298_298 37
+#define plate_opt_blob_300_301 38
+#define plate_opt_blob_302_302 39
+#define plate_opt_blob_304_305 40
+#define plate_opt_blob_306_306 41
+#define plate_opt_blob_308_309 42
+#define plate_opt_blob_310_310 43
+#define plate_opt_blob_312_313 44
+#define plate_opt_blob_314_314 45
+#define plate_opt_blob_316_316 46
+#define plate_opt_blob_318_318 47
+#define plate_opt_blob_320_320 48
+#define plate_opt_blob_331_331 49
+#define plate_opt_blob_341_341 50
+#define plate_opt_blob_351_351 51
+#define plate_opt_blob_361_361 52
+#define plate_opt_blob_372_372 53
+#define plate_opt_blob_382_382 54
+#define plate_opt_blob_392_392 55
+#define plate_opt_blob_402_402 56
+#define plate_opt_blob_403_403 57
+#define plate_opt_blob_413_413 58
+#define plate_opt_blob_423_423 59
+#define plate_opt_blob_433_433 60
+#define plate_opt_blob_443_443 61
+#define plate_opt_blob_444_529 62
+#define plate_opt_blob_445_530 63
+#define plate_opt_blob_input0_input0 64
+#define plate_opt_blob_output0_output0 65
 
-#define PLATE_OPT_BLOB_SIZE 78
+#define PLATE_OPT_BLOB_SIZE 66
 
 typedef struct plate_opt_ncnn_blob{ const char *name; int blob_id;} plate_opt_ncnn_blob_t;
 static plate_opt_ncnn_blob_t plate_opt_ncnn_blobs [] = {
@@ -123,37 +111,25 @@ static plate_opt_ncnn_blob_t plate_opt_ncnn_blobs [] = {
 	{"279" , plate_opt_blob_278_279},
 	{"281" , plate_opt_blob_280_281},
 	{"282" , plate_opt_blob_282_282},
-	{"283" , plate_opt_blob_283_283},
 	{"285" , plate_opt_blob_284_285},
 	{"286" , plate_opt_blob_286_286},
-	{"287" , plate_opt_blob_287_287},
 	{"289" , plate_opt_blob_288_289},
 	{"290" , plate_opt_blob_290_290},
-	{"291" , plate_opt_blob_291_291},
 	{"293" , plate_opt_blob_292_293},
 	{"294" , plate_opt_blob_294_294},
-	{"295" , plate_opt_blob_295_295},
 	{"297" , plate_opt_blob_296_297},
 	{"298" , plate_opt_blob_298_298},
-	{"299" , plate_opt_blob_299_299},
 	{"301" , plate_opt_blob_300_301},
 	{"302" , plate_opt_blob_302_302},
-	{"303" , plate_opt_blob_303_303},
 	{"305" , plate_opt_blob_304_305},
 	{"306" , plate_opt_blob_306_306},
-	{"307" , plate_opt_blob_307_307},
 	{"309" , plate_opt_blob_308_309},
 	{"310" , plate_opt_blob_310_310},
-	{"311" , plate_opt_blob_311_311},
 	{"313" , plate_opt_blob_312_313},
 	{"314" , plate_opt_blob_314_314},
-	{"315" , plate_opt_blob_315_315},
 	{"316" , plate_opt_blob_316_316},
-	{"317" , plate_opt_blob_317_317},
 	{"318" , plate_opt_blob_318_318},
-	{"319" , plate_opt_blob_319_319},
 	{"320" , plate_opt_blob_320_320},
-	{"321" , plate_opt_blob_321_321},
 	{"331" , plate_opt_blob_331_331},
 	{"341" , plate_opt_blob_341_341},
 	{"351" , plate_opt_blob_351_351},

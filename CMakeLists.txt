@@ -2,7 +2,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(c-net C)
 
-add_definitions(-Wall -Wno-unused-function -Ofast)
+add_definitions(-Wall -Wno-unused-function)
+#add_definitions(-Wall -Wno-unused-function -Ofast)
 set(CMAKE_C_STANDARD 99)
 
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

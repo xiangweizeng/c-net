@@ -42,26 +42,37 @@ FUNCTION_IRAM static int prelu_forward(
     prelu_t *prelu = (prelu_t*)operation->base;
 
     float *slope_data = (float *) prelu->slope.data.data;
-    int group = top->blob->shape[3];
-    int group_size = 1;
+    int group =  top->blob->shape[1] * top->blob->shape[2];
+    int group_size = top->blob->shape[3];
 
-    if(top->blob->shape[1] == 1 && top->blob->shape[2] > 1 ){
-        group =  top->blob->shape[2];
-        group_size = top->blob->shape[3];
-    } else if(top->blob->shape[1] > 1){
-        group =  top->blob->shape[1];
-        group_size = top->blob->shape[2]*top->blob->shape[3];
+    if(prelu->config.num_slope == 1){
+        size_t total = group * group_size;
+        int16_t *ptr = top->data.data;
+        float slope = slope_data[0];
+        fixed_mul_t slope_fixed = get_fixed_mul(slope);
+        fixed_mul_t requantize = prelu->config.requantize;
+
+        for (int j = 0; j < total; j++) {
+            int32_t v = ptr[j];
+            v = v < 0 ? MULTIPLY_FIDED(v, slope_fixed) : MULTIPLY_FIDED(v, requantize);
+            ptr[j] = CLIP_INT16(v, INT16_MAX, INT16_MIN);
+        }
+    }else{
+        int16_t *ptr = top->data.data;
+        fixed_mul_t requantize = prelu->config.requantize;
+        for(int s = 0; s < group; s ++){
+            for(int j = 0; j < group_size; j++){
+                float slope = slope_data[j];
+                fixed_mul_t slope_fixed = get_fixed_mul(slope);
+
+                int32_t v = ptr[j];
+                v = v < 0 ? MULTIPLY_FIDED(v, slope_fixed) : MULTIPLY_FIDED(v, requantize);
+                ptr[j] = CLIP_INT16(v, INT16_MAX, INT16_MIN);
+            }
+            ptr += group_size;
+        }
     }
 
-    prelu_group_context_t context = {
-            group_size,
-            prelu->config.num_slope,
-            slope_data,
-            prelu->config.requantize,
-            top->data.data
-    };
-
-    PARALLELIZE_1D(prelu_int16_group_thread, context, group);
     return CNET_STATUS_SUCCESS;
 }
 

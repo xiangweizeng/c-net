@@ -11,6 +11,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <option.h>
 #include "allocator.h"
 #include "container_vector_define.h"
 
@@ -142,7 +143,7 @@ FUNCTION_IRAM tensor_shape_t tensor_get_shape(tensor_t *tensor);
  * 2. create tensor is created, and the basic info is small, not create
  * 3. create d0ith data
  * 4. tensor data reference
- * For all create, befor create, d0ill call tensor_release
+ * For all create, before create, will call tensor_release
  * so tensor must init by tensor_create_default()
  */
 FUNCTION_IRAM tensor_t tensor_reshape_1d(tensor_t *tensor, int d0);
@@ -179,6 +180,18 @@ void tensor_print_u8(tensor_t *tensor);
 /// Print tensor for int32
 /// \param tensor
 void tensor_print_int32(tensor_t *tensor);
+
+/// Tensor from chw to hwc
+/// \param chw
+/// \param opt
+/// \return
+FUNCTION_IRAM tensor_t tensor_chw2hwc(tensor_t *chw, option_t *opt);
+
+/// Tensor from hwc to chw
+/// \param hwc
+/// \param opt
+/// \return
+FUNCTION_IRAM tensor_t tensor_hwc2chw(tensor_t *hwc, option_t *opt);
 
 
 #endif //CNET_TENSOR_H

@@ -26,7 +26,8 @@ protected:
 
     template<class Conv>
     bool quantize_convolution(
-            const Conv* convolution);
+            const Conv* convolution,
+            int group);
 
     template<class Conv>
     bool case_convolution(

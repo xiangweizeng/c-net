@@ -238,7 +238,8 @@ FUNCTION_IRAM static int inner_product_forward_impl(
             top_tensor->data,
     };
 
-    PARALLELIZE_1D_TILE_1D(inner_product_requantize_tile, context_mul, top_tensor->d0, 4);
+    int output_num = inner_product->config.filers_size[3];
+    PARALLELIZE_1D_TILE_1D(inner_product_requantize_tile, context_mul, output_num, 4);
     return CNET_STATUS_SUCCESS;
 }
 
