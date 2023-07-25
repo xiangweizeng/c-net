@@ -51,7 +51,7 @@ static void clip_thread_tile(clip_context_t *context, size_t index, size_t tile)
         int32_t v = MULTIPLY_FIDED(ptr[i], fixed);
         v = v > max ? max : v;
         v = v < min ? min : v;
-        ptr[i] = v;
+        ptr[i] = CLIP_INT16(v, INT16_MAX, INT16_MIN);
     }
 }
 
@@ -71,7 +71,7 @@ static void elu_thread_tile(elu_context_t *context, size_t index, size_t tile)
     for (int i = 0; i < tile; i++) {
         float x = ptr[i] / in_scale;
         if (x < 0.f){
-            x = alpha * (exp(x) - 1.f);
+            x = alpha * (expf(x) - 1.f);
         }
         ptr[i] = float2int16(x * out_scale);
     }

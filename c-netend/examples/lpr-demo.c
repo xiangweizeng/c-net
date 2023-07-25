@@ -18,7 +18,7 @@ void test_lpr(image_t *bgr) {
     tensor_t image = tensor_from_pixels_resize(bgr->buf, PIXEL_RGB2BGR, bgr->w, bgr->h, 128, 32, NULL);;
 
     lpr_recognizer_t lpr;
-    lpr_recognizer_create(&lpr, &network_lpr_opt, lpr_opt_blob_input_data, lpr_opt_blob__permute2_reshape_fc1x_fc1x);
+    lpr_recognizer_create(&lpr, &network_lpr_opt, lpr_opt_blob_input_data, lpr_opt_blob_fc1x__permute2_reshape_fc1x);
 
     plate_info_t plate_info;
     lpr_recognizer_predict_number(&lpr, &image, &plate_info);

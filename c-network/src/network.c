@@ -39,12 +39,12 @@ status_t network_setup_run_operations(network_t *network, option_t *opt){
     for(int i = 0; i < network->operation_size; i ++){
         operation_type_t *op = network->operations[i];
         operation_t* run = create_operation(*op);
-        run->base = op;
         if(NULL == run){
             network_teardown_range(network, i, opt);
             return CNET_STATUS_FAILED;
         }
 
+        run->base = op;
         if(run->setup && run->setup(run, network, opt) != CNET_STATUS_SUCCESS){
             fast_free(run);
 

@@ -23,7 +23,7 @@ bool PaddingCase::quantize_weights() {
 }
 
 bool PaddingCase::get_layer_define(std::string &layer_define) {
-    ncnn::Padding *pd = dynamic_cast<ncnn::Padding *>(layer);
+    auto *pd = dynamic_cast<ncnn::Padding *>(layer);
     std::string output = get_blob_output_name(0);
     float output_scale = case_blobs[output].scale;
 

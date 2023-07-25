@@ -42,10 +42,19 @@ bool ConcatCase::get_layer_define(std::string &layer_define) {
         }
     }
 
+    int axis = concat->axis + 4 - concat->top_shapes[0].dims;
+    if(axis == 1){
+        axis = 3;
+    }else if (axis == 2){
+        axis = 1;
+    } else if(axis == 3){
+        axis = 2;
+    }
+
     char buffer[1024] = {0};
     sprintf(buffer, "DEFINE_CONCAT_LAYER(%s, %d, %d, %s);\n",
             concat->name.c_str(),
-            concat->axis + 4 - concat->top_shapes[0].dims,
+            axis,
             (int)concat->bottoms.size(),
             input.c_str());
 

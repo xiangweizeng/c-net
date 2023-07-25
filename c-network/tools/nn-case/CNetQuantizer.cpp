@@ -47,6 +47,28 @@ namespace {
     }
 
     template<typename type>
+    ncnn::Mat permute(const ncnn::Mat& mat, int n, int h, int w, int c){
+        int c_step = w * h;
+
+        ncnn::Mat output_mat = mat.clone();
+        for(int n_ = 0; n_ < n; n_ ++){
+            type *input = (type*)mat.data + n_ * w * h * c;
+            for(int h_ = 0; h_ < h; h_ ++){
+
+                type *output = (type*)output_mat.data + n_ * w * h * c + h_*w*c;
+                for(int w_ = 0; w_ < w; w_ ++){
+                    for(int c_ = 0; c_ < c; c_++){
+                        type *input_c = input + c_ * c_step + h_ * w + w_;
+                        *output++ = *input_c;
+                    }
+                }
+            }
+        }
+
+        return output_mat;
+    }
+
+    template<typename type>
     float get_scaled(const ncnn::Mat& float_mat, int number = 2048)
     {
         QuantizeData quantize_data("scaled", number);
@@ -70,6 +92,10 @@ public:
     ncnn::Mat do_quantize(const ncnn::Mat& float_mat, float scale) override {
         return ::quantize_mat<Type>(float_mat,scale);
     };
+
+    ncnn::Mat permute(const ncnn::Mat &mat, int n, int h, int w, int c) override {
+        return ::permute<Type>(mat, n, h, w, c);
+    }
 };
 
 std::shared_ptr<CNetQuantizer> CNetQuantizer::makeQuantizer(data_type_t data_type) {

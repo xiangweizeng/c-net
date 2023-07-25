@@ -37,6 +37,7 @@ typedef enum pixel_type_t
     PIXEL_RGBA2BGR = PIXEL_RGBA | (PIXEL_BGR << PIXEL_CONVERT_SHIFT),
     PIXEL_RGBA2GRAY = PIXEL_RGBA | (PIXEL_GRAY << PIXEL_CONVERT_SHIFT),
 } pixel_type_t;
+
 /**
  * mean norm operator
  */
@@ -47,7 +48,7 @@ FUNCTION_IRAM void tensor_substract_mean_normalize(tensor_t *tensor, const float
  */
 FUNCTION_IRAM tensor_t tensor_from_pixels(const unsigned char* pixels, int type, int w, int h, allocator_t *allocator);
 FUNCTION_IRAM tensor_t tensor_from_pixels_resize(const unsigned char* pixels, int type, int w, int h, int target_width, int target_height, allocator_t *allocator);
-FUNCTION_IRAM tensor_t tensor_from_float16(const unsigned short *data, int size, allocator_t *allocator);// create tensor form float16 buffer
+//FUNCTION_IRAM tensor_t tensor_from_float16(const unsigned short *data, int size, allocator_t *allocator);// create tensor form float16 buffer
 
 /**
  * tensor data to pixels data, tensor is nchw layout

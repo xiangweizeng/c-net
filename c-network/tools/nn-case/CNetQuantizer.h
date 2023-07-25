@@ -30,6 +30,15 @@ public:
     /// \return
     virtual ncnn::Mat do_quantize(const ncnn::Mat& float_mat, float scale) = 0;
 
+    /// Permute
+    /// \param mat
+    /// \param n
+    /// \param h
+    /// \param w
+    /// \param c
+    /// \return
+    virtual ncnn::Mat permute(const ncnn::Mat& mat, int n, int h, int w, int c) = 0;
+
     /// Get Scaled
     /// \param float_mat
     /// \param number
