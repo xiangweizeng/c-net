@@ -46,6 +46,13 @@ public:
     virtual int32_t float2int(float v) = 0;
 
     /**
+     * Get threshold scale
+     * @param threshold
+     * @return
+     */
+    virtual float get_threshold_scale(float threshold) = 0;
+
+    /**
      * Get channels scaled
      * @param float_mat
      * @param channels

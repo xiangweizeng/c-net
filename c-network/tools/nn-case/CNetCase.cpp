@@ -56,7 +56,7 @@ void write_weights_data(const QuantizeMat &weights, FILE* cpp, const std::string
             }
         }
 
-        for (size_t i = 0; i < weights.extra; i++) {
+        for (int i = 0; i < weights.extra; i++) {
             fprintf(cpp, "0x%02x,", 0);
 
             count ++;
@@ -178,7 +178,7 @@ bool CNetCase::load_blob_scales(const char* filename)
             pch = strtok(nullptr, " ");
         }
 
-        blob_scale_table[key_str] = scales[0];
+        blob_scale_table[key_str] = quantize->get_threshold_scale(scales[0]);
 
         key_str.clear();
         scales.clear();
@@ -190,12 +190,42 @@ bool CNetCase::load_blob_scales(const char* filename)
 }
 
 bool CNetCase::fix_blob_scales() {
-    for (auto layer : layers) {
-       if(layer->type == "MemoryData"){
-           auto *md = dynamic_cast<ncnn::MemoryData *>(layer);
-           ncnn::Mat scaled = quantize->get_channels_scaled(md->data);
-           blob_scale_table[blobs[md->tops[0]].name] = scaled[0];
-       }
+
+    /// get requantize
+    std::vector<std::string> sequence;
+    for (const auto& blob : case_blobs) {
+        if (blob.second.consumers_count == 0) {
+            get_run_sequence(case_blob_names[blob.first], sequence);
+        }
+    }
+
+    std::set<std::string> fix_operation = {
+            "Crop",
+            "Interp",
+            "Padding",
+            "Pooling",
+            "Reshape",
+            "ShuffleChannel",
+            "Slice",
+    };
+
+    std::vector<ncnn::Layer*> blob_layers;
+    for (auto& layer_name : sequence) {
+        auto index = find_layer_index_by_name(layer_name.c_str());
+        auto layer = layers[index];
+
+        if(layer->type == "MemoryData"){
+            auto *md = dynamic_cast<ncnn::MemoryData *>(layer);
+            ncnn::Mat scaled = quantize->get_channels_scaled(md->data);
+            blob_scale_table[blobs[md->tops[0]].name] = scaled[0];
+        }
+
+        if(fix_operation.find(layer->type) != fix_operation.end()){
+            float input = blob_scale_table[blobs[layer->bottoms[0]].name];
+            for(int top : layer->tops){
+                blob_scale_table[blobs[top].name] = input;
+            }
+        }
     }
 
     return true;

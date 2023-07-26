@@ -95,6 +95,10 @@ public:
         return ::float2int<Type>(v);
     }
 
+    float get_threshold_scale(float threshold) override{
+        return std::numeric_limits<Type>::max() / threshold;
+    }
+
     ncnn::Mat get_channels_scaled(const ncnn::Mat &float_mat, int channels = 1, int number = 2048) override{
         ncnn::Mat scaled_mat;
         scaled_mat.create(channels, 4u, nullptr);

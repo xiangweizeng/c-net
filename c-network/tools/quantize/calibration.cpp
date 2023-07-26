@@ -156,7 +156,7 @@ static int post_training_quantize(const std::vector<std::string> &image_list, co
 }
 
 void showUsage() {
-    std::cout << "example: ./ncnn2table --param=squeeze-net-fp32.param"
+    std::cout << "example: ./calibration --param=squeeze-net-fp32.param"
                " --bin=squeeze-net-fp32.bin "
                " --images=images/"
                " --output=squeeze-net.table"
