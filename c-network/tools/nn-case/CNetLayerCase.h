@@ -78,6 +78,9 @@ protected:
     /// data type
     data_type_t &data_type;
 
+    /// do weights quantize by per channels
+    bool &per_channel_quantize;
+
     /// blobs
     std::vector<ncnn::Blob>& blobs;
 

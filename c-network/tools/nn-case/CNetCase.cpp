@@ -77,8 +77,10 @@ void write_weights_data(const QuantizeMat &weights, FILE* cpp, const std::string
     }
 }
 
-CNetCase::CNetCase(data_type_t data_type)
-        : data_type(data_type),
+CNetCase::CNetCase(data_type_t data_type,  bool per_channel_quantize)
+        : ncnn::Net(),
+          data_type(data_type),
+          per_channel_quantize(per_channel_quantize),
           blobs(mutable_blobs()),
           layers(mutable_layers()),
           quantize(CNetQuantize::makeQuantize(data_type)) {

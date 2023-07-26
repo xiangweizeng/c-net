@@ -27,9 +27,11 @@ bool InnerProductCase::quantize_weights() {
 
     float output_scale = case_blobs[output].scale;
     float input_scale = case_blobs[input].scale;
-    ncnn::Mat weight_scale = quantize->get_channels_scaled(ip->weight_data);
+
+    int32_t req_num = per_channel_quantize ? ip->num_output : 1;
+    ncnn::Mat weight_scale = quantize->get_channels_scaled(ip->weight_data, req_num);
     std::string param_var = "layer_" + ip->name + "_inner_product_filters";
-    auto quantize_data = quantize->do_quantize(ip->weight_data, weight_scale);
+    auto quantize_data = quantize->do_quantize(ip->weight_data, weight_scale, req_num);
 
     if(ip->bottom_shapes[0].dims == 3){
         int n = ip->num_output;
@@ -109,7 +111,7 @@ bool InnerProductCase::get_layer_define(std::string &layer_define) {
     }
 
     char buffer[1024] = {0};
-    int req_num = 1;
+    int32_t req_num = per_channel_quantize ? ip->num_output : 1;
     sprintf(buffer,
             "DEFINE_INNER_PRODUCT_LAYER(%s,"
             " %d, %d, %d, %d, %d,"

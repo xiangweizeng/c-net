@@ -34,7 +34,7 @@ class CNetCase : public ncnn::Net, std::enable_shared_from_this<CNetCase>{
 public:
     /// CNetCase
     /// \param data_type
-    explicit CNetCase(data_type_t data_type);
+    explicit CNetCase(data_type_t data_type, bool per_channel_quantize);
 
     /// Setup case layers
     /// \return
@@ -119,6 +119,9 @@ protected:
 protected:
     /// data type
     data_type_t data_type;
+
+    /// do weights quantize by per channels
+    bool per_channel_quantize;
 
     /// blobs
     std::vector<ncnn::Blob>& blobs;

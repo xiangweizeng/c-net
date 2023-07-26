@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     const char* out_cpp = argv[4];
     const char* table_path = argv[5];
 
-    CNetCase network_case(int16_data_type);
+    CNetCase network_case(int16_data_type, true);
     if(network_case.load_param(in_param)){
         fprintf(stderr, "load param failed\n");
         return -1;

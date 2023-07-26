@@ -71,9 +71,11 @@ bool ConvolutionCase::quantize_convolution(const Conv* convolution, int group)
 
     float output_scale = case_blobs[output].scale;
     float input_scale = case_blobs[input].scale;
-    ncnn::Mat weight_scale = quantize->get_channels_scaled(convolution->weight_data);
+
+    int32_t req_num = per_channel_quantize ? convolution->num_output : 1;
+    ncnn::Mat weight_scale = quantize->get_channels_scaled(convolution->weight_data, req_num);
     std::string param_var = "layer_" + convolution->name + "_convolution_filters";
-    ncnn::Mat quantize_data = quantize->do_quantize(convolution->weight_data, weight_scale);
+    ncnn::Mat quantize_data = quantize->do_quantize(convolution->weight_data, weight_scale, req_num);
     if(group == 1){
         quantize_data = quantize->permute(
                 quantize_data,
@@ -169,7 +171,7 @@ bool ConvolutionCase::case_convolution(const Conv* convolution, int group, std::
     }
 
     char buffer[1024] = {0};
-    int32_t req_num = 1;
+    int32_t req_num = per_channel_quantize ? convolution->num_output : 1;
     sprintf(buffer,
             "DEFINE_CONVOLUTION_LAYER(%s,"
             " %d, %d, %d, %d,"
