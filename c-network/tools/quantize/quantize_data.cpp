@@ -241,11 +241,10 @@ int QuantizeData::threshold_distribution(const std::vector<float> &distribution,
     return target_threshold;
 }
 
-float QuantizeData::get_data_blob_scale()
+float QuantizeData::get_data_blob_threshold()
 {
     normalize_histogram();
     threshold_bin = threshold_distribution(histogram);
     threshold = (threshold_bin + 0.5) * histogram_interval;
-    scale = 32767 / threshold;
-    return scale;
+    return threshold;
 }

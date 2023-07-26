@@ -42,7 +42,7 @@ public:
 
     static float compute_kl_divergence(const std::vector<float> &dist_a, const std::vector<float> &dist_b);
     static int threshold_distribution(const std::vector<float> &distribution, int target_bin=128);
-    float get_data_blob_scale();
+    float get_data_blob_threshold();
 
 public:
     std::string name;
