@@ -10,7 +10,7 @@ add_executable(nn-case
         QuantizeData.cpp
         CNetCase.cpp
         CNetLayerCase.cpp
-        CNetQuantizer.cpp
+        CNetQuantize.cpp
         layer/IgnoreLayerCase.cpp
         layer/ActivationCase.cpp
         layer/BatchNormCase.cpp

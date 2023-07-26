@@ -37,34 +37,53 @@ static std::string string_upper(std::string in_string){
     return in_string;
 }
 
-void write_weights_data(ncnn::Mat weights, FILE* cpp, const std::string& param_var)
+void write_weights_data(const QuantizeMat &weights, FILE* cpp, const std::string& param_var)
 {
     fprintf(cpp, "\n__attribute__((aligned(4))) \n");
 
-    size_t size = weights.total() * weights.elemsize;
+    size_t size = weights.data.total() * weights.data.elemsize;
     if(size > 0){
         fprintf(cpp, "static const unsigned char %s_data[] = {\n", param_var.c_str());
-        unsigned char* data = weights;
+        const unsigned char* data = weights.data;
+        int count = 0;
         for (size_t i = 0; i < size; i++) {
             fprintf(cpp, "0x%02x,", data[i]);
 
-            if ((i + 1) % 32 == 0) {
+            count ++;
+            if (count % 32 == 0) {
+                count = 0;
                 fprintf(cpp, "\n");
             }
         }
+
+        for (int i = 0; i < weights.extra; i++) {
+            fprintf(cpp, "0x%02x,", 0);
+
+            count ++;
+            if (count % 32 == 0) {
+                count = 0;
+                fprintf(cpp, "\n");
+            }
+        }
+
         fprintf(cpp, "};\n");
+        fprintf(cpp, "DEFINE_TENSOR(%s, %zu, %d, %zu, %s_data)",
+                param_var.c_str(),
+                weights.data.elemsize, weights.data_type, size,
+                param_var.c_str());
     } else{
         fprintf(cpp, "static const unsigned char* %s_data[] = NULL;\n", param_var.c_str());
+        fprintf(cpp, "DEFINE_TENSOR(%s, 0, 0, 0, %s_data)", param_var.c_str(), param_var.c_str());
     }
-
-    fprintf(cpp, "DEFINE_TENSOR(%s, %zu, %s_data, %f)", param_var.c_str(), size, param_var.c_str(), 1.f);
 }
 
-CNetCase::CNetCase(data_type_t data_type)
-        : data_type(data_type),
+CNetCase::CNetCase(data_type_t data_type,  bool per_channel_quantize)
+        : ncnn::Net(),
+          data_type(data_type),
+          per_channel_quantize(per_channel_quantize),
           blobs(mutable_blobs()),
           layers(mutable_layers()),
-          quantize(CNetQuantizer::makeQuantizer(data_type)) {
+          quantize(CNetQuantize::makeQuantize(data_type)) {
     opt.lightmode = false;
 }
 
@@ -159,7 +178,7 @@ bool CNetCase::load_blob_scales(const char* filename)
             pch = strtok(nullptr, " ");
         }
 
-        blob_scale_table[key_str] = scales[0];
+        blob_scale_table[key_str] = quantize->get_threshold_scale(scales[0]);
 
         key_str.clear();
         scales.clear();
@@ -171,11 +190,42 @@ bool CNetCase::load_blob_scales(const char* filename)
 }
 
 bool CNetCase::fix_blob_scales() {
-    for (auto layer : layers) {
-       if(layer->type == "MemoryData"){
-           auto *md = dynamic_cast<ncnn::MemoryData *>(layer);
-           blob_scale_table[blobs[md->tops[0]].name] = quantize->get_scaled(md->data);
-       }
+
+    /// get requantize
+    std::vector<std::string> sequence;
+    for (const auto& blob : case_blobs) {
+        if (blob.second.consumers_count == 0) {
+            get_run_sequence(case_blob_names[blob.first], sequence);
+        }
+    }
+
+    std::set<std::string> fix_operation = {
+            "Crop",
+            "Interp",
+            "Padding",
+            "Pooling",
+            "Reshape",
+            "ShuffleChannel",
+            "Slice",
+    };
+
+    std::vector<ncnn::Layer*> blob_layers;
+    for (auto& layer_name : sequence) {
+        auto index = find_layer_index_by_name(layer_name.c_str());
+        auto layer = layers[index];
+
+        if(layer->type == "MemoryData"){
+            auto *md = dynamic_cast<ncnn::MemoryData *>(layer);
+            ncnn::Mat scaled = quantize->get_channels_scaled(md->data);
+            blob_scale_table[blobs[md->tops[0]].name] = scaled[0];
+        }
+
+        if(fix_operation.find(layer->type) != fix_operation.end()){
+            float input = blob_scale_table[blobs[layer->bottoms[0]].name];
+            for(int top : layer->tops){
+                blob_scale_table[blobs[top].name] = input;
+            }
+        }
     }
 
     return true;

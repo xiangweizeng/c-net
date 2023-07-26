@@ -29,10 +29,10 @@ bool ConcatCase::get_layer_define(std::string &layer_define) {
     for (size_t j = 0; j < concat->bottoms.size(); j++) {
         std::string input_blob = get_blob_input_name((int)j);
         float input_scale = case_blobs[input_blob].scale;
-        fixed_mul_t fixed = get_fixed_mul(output_scale / input_scale);
+        float requantize = output_scale / input_scale;
 
         char concat_blob[256] = {0};
-        sprintf(concat_blob, "%d, %d", fixed.round_mul, fixed.shift);
+        sprintf(concat_blob, "%f", requantize);
 
         if (j == 0) {
             input = concat_blob;

@@ -18,13 +18,15 @@ typedef struct convolution_context {
     tensor_t* bottom;
     tensor_t* top;
     const int16_t* weight_data;
-    const int16_t* bias_data;
+    const int32_t* bias_data;
+    const float* requantize_data;
     int out_w;
     int out_h;
 }convolution_context_t;
 
 FUNCTION_IRAM int dotprod(const int16_t *src1, const int16_t *src2, int64_t *dest, int len, int8_t shift){
     int64_t inner_dot = 0;
+
     for(int i = 0; i < len; i++){
         inner_dot += src1[i] * src2[i];
     }
@@ -34,11 +36,12 @@ FUNCTION_IRAM int dotprod(const int16_t *src1, const int16_t *src2, int64_t *des
 
 FUNCTION_IRAM static void int16_conv(convolution_context_t* context) {
 
-    fixed_mul_t requantize = context->config.requantize;
-    fixed_mul_t leaky = context->config.leaky;
+    const float *requantize_data = context->requantize_data;
+    fixed_mul_t leaky = get_fixed_mul(context->config.leaky);
 
     int32_t out_max = context->config.max;
     int32_t out_min = context->config.min;
+    int requantize_num = context->config.requantize_num;
 
     int input_w = context->bottom->d1;
     int input_h = context->bottom->d2;
@@ -97,6 +100,8 @@ FUNCTION_IRAM static void int16_conv(convolution_context_t* context) {
             for (size_t p = 0; p < output_c; p++)
             {
                 int32_t bias_value = context->config.bias_term ? context->bias_data[p] : 0;
+                float output_scale = requantize_num > 1 ? requantize_data[p] : requantize_data[0];
+                fixed_mul_t requantize = get_fixed_mul(output_scale);
                 const int16_t *w0 = context->weight_data + kernel_3d_size * p;
 
                 int64_t sum = 0;
@@ -112,13 +117,14 @@ FUNCTION_IRAM static void int16_conv(convolution_context_t* context) {
     tensor_release(&cache_row);
 }
 
-FUNCTION_IRAM static void group_conv(convolution_context_t* context, size_t g) {
+FUNCTION_IRAM static void group_conv(convolution_context_t* context) {
 
-    fixed_mul_t requantize = context->config.requantize;
-    fixed_mul_t leaky = context->config.leaky;
+    const float *requantize_data = context->requantize_data;
+    fixed_mul_t leaky = get_fixed_mul(context->config.leaky);
 
     int32_t out_max = context->config.max;
     int32_t out_min = context->config.min;
+    int requantize_num = context->config.requantize_num;
 
     int input_w = context->bottom->d1;
     int input_h = context->bottom->d2;
@@ -146,7 +152,6 @@ FUNCTION_IRAM static void group_conv(convolution_context_t* context, size_t g) {
 
     tensor_t cache_row = tensor_create_default();
     tensor_create_1d(&cache_row, kernel_3d_size , 2, 0);
-    int16_t* weight_data = (int16_t*)context->weight_data + kernel_group_size * g;
     const int16_t* input = (int16_t*)context->bottom->data;
 
     int32_t oy, ox, kx, ky;
@@ -157,45 +162,47 @@ FUNCTION_IRAM static void group_conv(convolution_context_t* context, size_t g) {
             const int32_t in_y_origin = (oy * stride_h) - pad_top;
             const int32_t in_x_origin = (ox * stride_w) - pad_left;
 
-            int16_t* rows = cache_row.data;
-            for (ky = 0; ky < kernel_h; ky++)
-            {
-                for (kx = 0; kx < kernel_w; kx++)
+            for(int32_t g = 0; g < context->config.group; g ++){
+                int16_t* weight_data = (int16_t*)context->weight_data + kernel_group_size * g;
+                int16_t* rows = cache_row.data;
+                for (ky = 0; ky < kernel_h; ky++)
                 {
-                    const int32_t in_y = in_y_origin + dilation_h * ky;
-                    const int32_t in_x = in_x_origin + dilation_w * kx;
+                    for (kx = 0; kx < kernel_w; kx++)
+                    {
+                        const int32_t in_y = in_y_origin + dilation_h * ky;
+                        const int32_t in_x = in_x_origin + dilation_w * kx;
 
-                    if(in_x < 0 || in_x >= input_w || in_y < 0 || in_y >= input_h){
-                        for(int p_c = 0; p_c < input_group_size; p_c ++){
-                            rows[p_c] = pad_vale;
+                        if(in_x < 0 || in_x >= input_w || in_y < 0 || in_y >= input_h){
+                            for(int p_c = 0; p_c < input_group_size; p_c ++){
+                                rows[p_c] = pad_vale;
+                            }
+                            rows += input_group_size;
+                        } else {
+                            int offset = (in_y * input_w + in_x) * input_c + g * input_group_size;
+                            for(int p_c = 0; p_c < input_group_size; p_c ++){
+                                rows[p_c] = input[offset + p_c];
+                            }
+                            rows += input_group_size;
                         }
-                        rows += input_group_size;
-                    } else {
-                        int offset = (in_y * input_w + in_x) * input_c + g * input_group_size;
-                        for(int p_c = 0; p_c < input_group_size; p_c ++){
-                            rows[p_c] = input[offset + p_c];
-//                            printf("%d ", input[offset + p_c]);
-                        }
-                        rows += input_group_size;
                     }
                 }
-            }
 
-//            cache_row.layout = TENSOR_LAYOUT_NCHW;
-//            tensor_print(&cache_row);
+                int16_t* out_ptr = (int16_t*)context->top->data + (oy * context->out_w + ox) * output_c + g * output_group_size;
+                for (int p = 0; p < output_group_size; p++) {
 
-            int16_t* out_ptr = (int16_t*)context->top->data + (oy * context->out_w + ox) * output_c + g * output_group_size;
-            for (int p = 0; p < output_group_size; p++) {
+                    const int16_t* w = weight_data + kernel_3d_size * p;
+                    int32_t c_offset = g * output_group_size + p;
+                    int32_t bias_value = context->config.bias_term ? context->bias_data[c_offset] : 0;
+                    float output_scale = requantize_num > 1 ? requantize_data[c_offset] : requantize_data[0];
+                    fixed_mul_t requantize = get_fixed_mul(output_scale);
 
-                const int16_t* w = weight_data + kernel_3d_size * p;
-                int32_t bias_value = context->config.bias_term ? context->bias_data[g * output_group_size + p] : 0;
+                    int64_t sum = 0;
+                    dotprod(cache_row.data, w, &sum, kernel_3d_size, 0);
 
-                int64_t sum = 0;
-                dotprod(cache_row.data, w, &sum, kernel_3d_size, 0);
-
-                int32_t sum_i32 = REQUANTIZE_BIAS(sum, requantize, bias_value);
-                sum_i32 = sum_i32 > 0 ? sum_i32 : MULTIPLY_FIDED(sum_i32, leaky);
-                out_ptr[p] = CLIP_INT16(sum_i32, out_max, out_min);
+                    int32_t sum_i32 = REQUANTIZE_BIAS(sum, requantize, bias_value);
+                    sum_i32 = sum_i32 > 0 ? sum_i32 : MULTIPLY_FIDED(sum_i32, leaky);
+                    out_ptr[p] = CLIP_INT16(sum_i32, out_max, out_min);
+                }
             }
         }
     }
@@ -214,14 +221,13 @@ FUNCTION_IRAM static int convolution_forward(
     tensor_t *top_tensor = &top_tensors->data[0].data;
 
     /// prepare context
-    const int16_t* weight_data = (const int16_t*)convolution->filters.data.data;
-    const int16_t* bias_data = (const int16_t*)convolution->bias.data.data;
     convolution_context_t int16_context = {
             convolution->config,
             bottom_tensor,
             top_tensor,
-            weight_data,
-            bias_data,
+            convolution->filters.data,
+            convolution->bias.data,
+            convolution->requantize.data,
             top_tensor->d1,
             top_tensor->d2,
     };
@@ -231,9 +237,7 @@ FUNCTION_IRAM static int convolution_forward(
         int16_conv(&int16_context);
     }
     else {
-        for(int g = 0; g < convolution->config.group; g ++){
-            group_conv(&int16_context, g);
-        }
+        group_conv(&int16_context);
     }
 
     return CNET_STATUS_SUCCESS;

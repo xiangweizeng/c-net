@@ -19,7 +19,7 @@ bool PReLUCase::ignore() {
 }
 
 bool PReLUCase::quantize_weights() {
-    ncnn::PReLU *relu = dynamic_cast<ncnn::PReLU *>(layer);
+    auto *relu = dynamic_cast<ncnn::PReLU *>(layer);
     std::string input = get_blob_input_name(0);
     std::string output = get_blob_output_name(0);
 
@@ -31,25 +31,24 @@ bool PReLUCase::quantize_weights() {
         slope_data[i] =  slope_data[i] * output_scale / input_scale;
     }
 
+    QuantizeMat quantize_slope_data(slope_data, float_data_type);
     std::string param_var = "layer_" + relu->name + "_prelu_slope";
-    quantize_data_weights[param_var] = slope_data;
+    quantize_data_weights[param_var] = quantize_slope_data;
 
     return true;
 }
 
 bool PReLUCase::get_layer_define(std::string &layer_define) {
-    ncnn::PReLU *relu = dynamic_cast<ncnn::PReLU *>(layer);
+    auto *relu = dynamic_cast<ncnn::PReLU *>(layer);
     std::string input = get_blob_input_name(0);
     std::string output = get_blob_output_name(0);
 
     float input_scale = case_blobs[input].scale;
     float output_scale = case_blobs[output].scale;
-    fixed_mul_t requantize = get_fixed_mul(output_scale / input_scale);
+    float requantize = output_scale / input_scale;
 
     char buffer[1024] = {0};
-    sprintf(buffer, "DEFINE_PRELU_LAYER(%s, %d, %d, %d);\n",
-            relu->name.c_str(), relu->num_slope,
-            requantize.round_mul, requantize.shift);
+    sprintf(buffer, "DEFINE_PRELU_LAYER(%s, %d, %f);\n", relu->name.c_str(), relu->num_slope, requantize);
 
     layer_define = buffer;
     return true;

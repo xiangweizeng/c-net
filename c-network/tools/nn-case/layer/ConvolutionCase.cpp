@@ -70,11 +70,14 @@ bool ConvolutionCase::quantize_convolution(const Conv* convolution, int group)
     std::string output = get_blob_output_name(0);
 
     float output_scale = case_blobs[output].scale;
-    float weight_scale = quantize->get_scaled(convolution->weight_data);
+    float input_scale = case_blobs[input].scale;
+
+    int32_t req_num = per_channel_quantize ? convolution->num_output : 1;
+    ncnn::Mat weight_scale = quantize->get_channels_scaled(convolution->weight_data, req_num);
     std::string param_var = "layer_" + convolution->name + "_convolution_filters";
-    ncnn::Mat quantize_data = quantize->do_quantize(convolution->weight_data, weight_scale);
+    ncnn::Mat quantize_data = quantize->do_quantize(convolution->weight_data, weight_scale, req_num);
     if(group == 1){
-        quantize_data_weights[param_var] = quantize->permute(
+        quantize_data = quantize->permute(
                 quantize_data,
                 convolution->num_output,
                 convolution->kernel_h,
@@ -93,16 +96,27 @@ bool ConvolutionCase::quantize_convolution(const Conv* convolution, int group)
             auto permute_mat = quantize->permute(group_mat, n, h, w, c);
             memcpy(group_mat.data, permute_mat.data, group_filters_size * group_mat.elemsize);
         }
-
-        quantize_data_weights[param_var] = quantize_data;
     }
+    quantize_data_weights[param_var] = QuantizeMat(quantize_data, data_type);
 
     param_var = "layer_" + convolution->name + "_convolution_bias";
     if (convolution->bias_term) {
-        quantize_data_weights[param_var] = quantize->do_quantize(convolution->bias_data, output_scale);
+        ncnn::Mat output_quantize_data;
+        output_quantize_data.create(1, 4u, nullptr);
+        output_quantize_data[0] = output_scale;
+
+        quantize_data_weights[param_var] = QuantizeMat(
+                quantize->do_quantize_s32(convolution->bias_data, output_quantize_data),
+                int32_data_type);
     } else{
-        quantize_data_weights[param_var] = ncnn::Mat();
+        quantize_data_weights[param_var] = QuantizeMat();
     }
+
+    param_var = "layer_" + convolution->name + "_convolution_requantize";
+    for(int i = 0; i < weight_scale.total(); i++){
+        weight_scale[i] = output_scale / (weight_scale[i] * input_scale);
+    }
+    quantize_data_weights[param_var] = QuantizeMat(weight_scale, float_data_type);
 
     return true;
 }
@@ -120,37 +134,35 @@ bool ConvolutionCase::case_convolution(const Conv* convolution, int group, std::
 
     float input_scale = case_blobs[input].scale;
     float output_scale = case_blobs[output].scale;
-    float weight_scale = quantize->get_scaled(convolution->weight_data);
-    fixed_mul_t requantize = get_fixed_mul(output_scale / (input_scale * weight_scale));
 
     int32_t max;
     int32_t min;
-    fixed_mul_t leaky;
+    float leaky;
     switch (convolution->activation_type)
     {
         case 0:
         {
-            min = INT16_MIN;
-            max = INT16_MAX;
-            leaky = get_fixed_mul(1.f);
+            min = quantize->get_number_min();
+            max = quantize->get_number_max();
+            leaky = (1.f);
             break;
         }
         case 1: {
             min = 0;
-            max = INT16_MAX;
-            leaky = get_fixed_mul(1.f);
+            max = quantize->get_number_max();
+            leaky = (1.f);
             break;
         }
         case 2: {
-            min = INT16_MIN;
-            max = INT16_MAX;
-            leaky = get_fixed_mul(convolution->activation_params[0]);
+            min = quantize->get_number_min();
+            max = quantize->get_number_max();
+            leaky = (convolution->activation_params[0]);
             break;
         }
         case 3: {
-            min = convolution->activation_params[0]*output_scale;
-            max = convolution->activation_params[1]*output_scale;
-            leaky = get_fixed_mul(1.f);
+            min = quantize->float2int(convolution->activation_params[0]*output_scale);
+            max = quantize->float2int(convolution->activation_params[1]*output_scale);
+            leaky = (1.f);
             break;
         }
         default:
@@ -159,13 +171,14 @@ bool ConvolutionCase::case_convolution(const Conv* convolution, int group, std::
     }
 
     char buffer[1024] = {0};
+    int32_t req_num = per_channel_quantize ? convolution->num_output : 1;
     sprintf(buffer,
             "DEFINE_CONVOLUTION_LAYER(%s,"
             " %d, %d, %d, %d,"
             " %d,"
             " %d, %d, %d, %d, "
             " %d, %d, %d, %d, %d,"
-            " %d, %d, %d, %d, %d, %d, %d);\n",
+            " %d, %d, %f, %d, %d);\n",
             convolution->name.c_str(),
             convolution->num_output,
             convolution->kernel_h,
@@ -174,7 +187,7 @@ bool ConvolutionCase::case_convolution(const Conv* convolution, int group, std::
             group,
             convolution->stride_w, convolution->stride_h, convolution->dilation_w, convolution->dilation_h,
             padding[0], padding[1], padding[2], padding[3], pad_value,
-            convolution->bias_term, requantize.round_mul, requantize.shift, leaky.round_mul, leaky.shift, max, min);
+            convolution->bias_term, req_num, leaky, max, min);
 
     layer_define = buffer;
 

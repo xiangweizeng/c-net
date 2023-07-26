@@ -125,13 +125,7 @@ FUNCTION_IRAM operation_t *create_operation(int operation_type);
 /**
 * weight container
 */
-typedef struct weight_container {
-    /// data
-    tensor_t data;
-
-    /// scale
-    float scale;
-}weight_container_t;
+typedef tensor_t weight_container_t;
 
 /**
  * convolution operation
@@ -145,6 +139,9 @@ typedef struct convolution {
 
     /// bias
     weight_container_t bias;
+
+    /// requantize
+    weight_container_t requantize;
 } convolution_t;
 
 /**
@@ -180,6 +177,9 @@ typedef struct inner_product{
 
     /// bias
     weight_container_t bias;
+
+    /// requantize
+    weight_container_t requantize;
 } inner_product_t;
 
 /**

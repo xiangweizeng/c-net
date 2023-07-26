@@ -33,10 +33,7 @@ FUNCTION_IRAM static int concat_forward(
         }
 
         int16_t* input = (int16_t*)input_matrix->data;
-        fixed_mul_t fixed = {
-                config.output_fixed_mul[2 * b],
-                config.output_fixed_mul[2 * b + 1]
-        };
+        fixed_mul_t fixed = get_fixed_mul(config.output_requantize[b]);
 
         blob_shape_t i; i[0] = 0;
         for (i[1] = 0; i[1] < in_shape[1]; i[1]++) {

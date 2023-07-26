@@ -29,39 +29,37 @@
 #define REFERENCE_LAYER(operation, name)                \
         &(layer_##name##_##operation.config.type)
 
-#define DEFINE_TENSOR(name, size, tensor_data, sc)      \
+#define DEFINE_TENSOR(name, es, dt, size, tensor_data)  \
+                                                        \
 static const weight_container_t name = {                \
-   .data = {                                            \
-        .data = (void*)tensor_data,                     \
-        .elem_size = 2,                                 \
-        .data_type = TENSOR_DATA_INT16,                 \
-        .dims = 1,                                      \
-        .d3 = 1,                                        \
-        .d2 = 1,                                        \
-        .d1 = 1,                                        \
-        .d0 = size,                                     \
-        .step = size,                                   \
-        .refcount = NULL,                               \
-        .layout = TENSOR_LAYOUT_NCHW,                   \
-        .allocator = NULL,                              \
-    },                                                  \
-    .scale = sc,                                        \
+    .data = (void*)tensor_data,                         \
+    .elem_size = es,                                    \
+    .data_type = dt,                                    \
+    .dims = 1,                                          \
+    .d3 = 1,                                            \
+    .d2 = 1,                                            \
+    .d1 = 1,                                             \
+    .d0 = size,                                         \
+    .step = size,                                       \
+    .refcount = NULL,                                   \
+    .layout = TENSOR_LAYOUT_NCHW,                       \
+    .allocator = NULL,                                  \
 };
 
 #define DEFINE_CONVOLUTION_LAYER(name,                  \
-                    batch, channel,                     \
-                    height, width,                      \
+                    batch, height,                      \
+                    width, channel,                     \
                     dp, s_w, s_h,                       \
                     d_w, d_h,                           \
                     pl, pr, pt, pb,                     \
                     pv, bs,                             \
-                    rq_m, rq_s,                         \
-                    lk_m, lk_s,                         \
+                    rq_num, lk,                         \
                     max_, min_)                         \
+                                                        \
 static convolution_t layer_##name##_convolution = {     \
         .config = {                                     \
             .type = convolution_operation_type,         \
-            .filers_size = {batch,channel,height,width},\
+            .filers_size = {batch,height,width,channel},\
             .group = dp,                                \
             .stride_w = s_w,                            \
             .stride_h = s_h,                            \
@@ -73,13 +71,14 @@ static convolution_t layer_##name##_convolution = {     \
             .pad_bottom = pb,                           \
             .pad_value = pv,                            \
             .bias_term = bs,                            \
-            .requantize = {rq_m, rq_s},                 \
-            .leaky = {lk_m, lk_s},                      \
+            .leaky = lk,                                \
             .max = max_,                                \
             .min = min_,                                \
+            .requantize_num = rq_num                    \
         },                                              \
         .filters = layer_##name##_convolution_filters,  \
         .bias = layer_##name##_convolution_bias,        \
+        .requantize = layer_##name##_convolution_requantize,\
 };
 
 #define DEFINE_POOLING_LAYER(name, p_t,                 \
@@ -87,8 +86,7 @@ static convolution_t layer_##name##_convolution = {     \
                                 s_w ,s_h,               \
                                 g_b,                    \
                                 pl, pr, pt, pb,         \
-                                pv,                     \
-                                c_p, rq_m, rq_s)        \
+                                pv, c_p)                \
 static pooling_t layer_##name##_pooling = {             \
         .config = {                                     \
             .type = pooling_operation_type,             \
@@ -104,7 +102,6 @@ static pooling_t layer_##name##_pooling = {             \
             .pad_bottom = pb,                           \
             .pad_value = pv,                            \
             .count_include_pad = c_p,                   \
-            .requantize = {rq_m, rq_s},                 \
         },                                              \
 };
 
@@ -123,8 +120,7 @@ static padding_t layer_##name##_padding = {             \
 };
 
 #define DEFINE_CROP_LAYER(name, d_m, w_o ,h_o, c_o,     \
-                        o_w, o_h, o_c,                  \
-                        rq_m, rq_s)                     \
+                        o_w, o_h, o_c)                  \
 static crop_t layer_##name##_crop = {                   \
         .config = {                                     \
             .type = crop_operation_type,                \
@@ -135,29 +131,28 @@ static crop_t layer_##name##_crop = {                   \
             .out_w = o_w,                               \
             .out_h = o_h,                               \
             .out_c = o_c,                               \
-            .requantize = {rq_m, rq_s},                 \
         },                                              \
 };
 
 #define DEFINE_INNER_PRODUCT_LAYER(name,                \
-                    batch, channel,                     \
-                    height, width,                      \
+                    batch, height,                      \
+                    width, channel,                     \
                     bs,                                 \
-                    rq_m, rq_s,                         \
-                    lk_m, lk_s,                         \
+                    rq_num, lk,                         \
                     max_, min_)                         \
 static inner_product_t layer_##name##_inner_product = { \
         .config = {                                     \
             .type = inner_product_operation_type,       \
-            .filers_size = {batch,channel,height,width},\
+            .filers_size = {batch,height,width,channel},\
             .bias_term = bs,                            \
-            .requantize = {rq_m, rq_s},                 \
-            .leaky = {lk_m, lk_s},                      \
+            .leaky = lk,                                \
             .max = max_,                                \
             .min = min_,                                \
+            .requantize_num = rq_num,                   \
         },                                              \
         .weights = layer_##name##_inner_product_filters,\
         .bias = layer_##name##_inner_product_bias,      \
+        .requantize = layer_##name##_inner_product_requantize,\
 };
 
 #define DEFINE_ACTIVATION_LAYER(name, a_t, ...)         \
@@ -173,18 +168,16 @@ static activation_t layer_##name##_activation = {       \
 static batch_norm_t layer_##name##_batch_norm = {       \
         .config ={                                      \
             .type = batch_norm_operation_type,          \
-            .requantize = {rq_m, rq_s},                 \
         },                                              \
         .scale = layer_##name##_batch_norm_scale,       \
         .offset = layer_##name##_batch_norm_offset,     \
 };
 
-#define DEFINE_SLICE_LAYER(name, a_x, rq_m, rq_s)       \
+#define DEFINE_SLICE_LAYER(name, a_x)                   \
 static slice_t layer_##name##_slice = {                 \
         .config ={                                      \
             .type = slice_operation_type,               \
             .axis = a_x,                                \
-            .requantize = {rq_m, rq_s},                 \
         },                                              \
         .slices = layer_##name##_slice_slices,          \
 };
@@ -195,7 +188,7 @@ static concat_t layer_##name##_concat = {               \
             .type = concat_operation_type,              \
             .axis = a_x,                                \
             .concat_count = i_c,                        \
-            .output_fixed_mul = {__VA_ARGS__},          \
+            .output_requantize = {__VA_ARGS__},         \
         }                                               \
 };
 
@@ -265,12 +258,12 @@ static upsample_t layer_##name##_upsample = {           \
         }                                               \
 };
 
-#define DEFINE_PRELU_LAYER(name, s_n, rq_m, rq_s)       \
+#define DEFINE_PRELU_LAYER(name, s_n, rq)               \
 static prelu_t layer_##name##_prelu = {                 \
         .config = {                                     \
             .type = prelu_operation_type,               \
             .num_slope = s_n,                           \
-            .requantize = {rq_m, rq_s},                 \
+            .requantize = rq,                           \
         },                                              \
         .slope = layer_##name##_prelu_slope,            \
 };

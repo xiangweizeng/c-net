@@ -102,6 +102,8 @@ typedef enum data_type{
     int8_data_type = 2,
     /// int16
     int16_data_type = 3,
+    /// int32
+    int32_data_type = 4,
 }data_type_t;
 
 /// blob info
@@ -160,17 +162,17 @@ typedef struct convolution_config {
     /// have bias
     int bias_term;
 
-    /// requantize
-    fixed_mul_t requantize;
-
     /// float leaky
-    fixed_mul_t leaky;
+    float leaky;
 
     /// clip max
     int32_t max;
 
     /// clip max
     int32_t min;
+
+    /// requantize
+    int32_t requantize_num;
 } convolution_config_t;
 
 /// pooling type
@@ -211,9 +213,6 @@ typedef struct pooling_config {
 
     /// count pad
     int count_include_pad;
-
-    /// requantize
-    fixed_mul_t requantize;
 } pooling_config_t;
 
 /// padding mode
@@ -262,9 +261,6 @@ typedef struct crop_config{
     int out_w;
     int out_h;
     int out_c;
-
-    /// requantize
-    fixed_mul_t requantize;
 }crop_config_t;
 
 typedef struct inner_product_config {
@@ -277,17 +273,17 @@ typedef struct inner_product_config {
     /// have bias
     int bias_term;
 
-    /// requantize
-    fixed_mul_t requantize;
-
     /// float leaky
-    fixed_mul_t leaky;
+    float leaky;
 
     /// clip max
     int32_t max;
 
     /// clip max
     int32_t min;
+
+    /// requantize
+    int32_t requantize_num;
 } inner_product_config_t;
 
 typedef struct activate_config {
@@ -305,9 +301,6 @@ typedef struct activate_config {
 typedef struct batch_norm_config{
     /// operation type
     operation_type_t type;
-
-    /// requantize
-    fixed_mul_t requantize;
 }batch_norm_config_t;
 
 typedef struct slice_config {
@@ -316,9 +309,6 @@ typedef struct slice_config {
 
     /// axis
     int axis;
-
-    /// requantize
-    fixed_mul_t requantize;
 } slice_config_t;
 
 typedef struct concat_config {
@@ -331,8 +321,8 @@ typedef struct concat_config {
     /// concat count
     int concat_count;
 
-    /// output fixed_mul
-    int output_fixed_mul[24];
+    /// output requantize
+    float output_requantize[24];
 } concat_config_t;
 
 typedef struct reshape_config {
@@ -449,7 +439,7 @@ typedef struct prelu_config {
     int num_slope;
 
     /// requantize
-    fixed_mul_t requantize;
+    float requantize;
 } prelu_config_t;
 
 /**

@@ -21,10 +21,13 @@ bool MemoryDataCase::ignore() {
 bool MemoryDataCase::quantize_weights() {
     std::string output = get_blob_output_name(0);
 
-    ncnn::MemoryData * md = (ncnn::MemoryData*)layer;
-    float weight_scale = quantize->get_scaled(md->data);
+    auto * md = (ncnn::MemoryData*)layer;
+
     std::string param_var = "layer_" + md->name + "_shuffle_channel_data";
-    quantize_data_weights[param_var] = quantize->do_quantize(md->data, weight_scale);
+    ncnn::Mat weight_scale = quantize->get_channels_scaled(md->data);
+    quantize_data_weights[param_var] = QuantizeMat(
+            quantize->do_quantize(md->data, weight_scale),
+            data_type);
     return true;
 }
 

@@ -33,7 +33,7 @@ public:
 
     static float compute_kl_divergence(const std::vector<float> &dist_a, const std::vector<float> &dist_b);
     static int threshold_distribution(const std::vector<float> &distribution, const int target_bin=128);
-    float get_data_blob_scale();
+    float get_data_blob_threshold();
 
 public:
     std::string name;
@@ -43,9 +43,8 @@ public:
     float histogram_interval;
     std::vector<float> histogram;
 
-    float threshold{};
-    int threshold_bin{};
-    float scale{};
+    float threshold;
+    int threshold_bin;
 };
 
 #endif //NCNN_QUANTIZE_DATA_H

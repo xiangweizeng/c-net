@@ -11,27 +11,6 @@
 #include "operation.h"
 #include "operation_config.h"
 
-typedef struct prelu_group_context_t {
-    int group_size;
-    float num_slope;
-    float *slope_data;
-    fixed_mul_t requantize;
-    int16_t *ptr;
-} prelu_group_context_t;
-
-FUNCTION_IRAM static void prelu_int16_group_thread(prelu_group_context_t *context, size_t g) {
-    int16_t *ptr = context->ptr + g * context->group_size;
-    float slope = context->num_slope > 1 ? context->slope_data[g] : context->slope_data[0];
-    fixed_mul_t slope_fixed = get_fixed_mul(slope);
-    fixed_mul_t requantize = context->requantize;
-
-    for (int j = 0; j < context->group_size; j++) {
-        int32_t v = ptr[j];
-        v = v < 0 ? MULTIPLY_FIDED(v, slope_fixed) : MULTIPLY_FIDED(v, requantize);
-        ptr[j] = CLIP_INT16(v, INT16_MAX, INT16_MIN);
-    }
-}
-
 FUNCTION_IRAM static int prelu_forward(
         operation_t *operation,
         vector_blob_container_t *bottom_tensors,
@@ -41,7 +20,7 @@ FUNCTION_IRAM static int prelu_forward(
     blob_container_t *top = &top_tensors->data[0];
     prelu_t *prelu = (prelu_t*)operation->base;
 
-    float *slope_data = (float *) prelu->slope.data.data;
+    float *slope_data = (float *) prelu->slope.data;
     int group =  top->blob->shape[1] * top->blob->shape[2];
     int group_size = top->blob->shape[3];
 
@@ -49,8 +28,9 @@ FUNCTION_IRAM static int prelu_forward(
         size_t total = group * group_size;
         int16_t *ptr = top->data.data;
         float slope = slope_data[0];
+
         fixed_mul_t slope_fixed = get_fixed_mul(slope);
-        fixed_mul_t requantize = prelu->config.requantize;
+        fixed_mul_t requantize = get_fixed_mul(prelu->config.requantize);
 
         for (int j = 0; j < total; j++) {
             int32_t v = ptr[j];
@@ -59,7 +39,7 @@ FUNCTION_IRAM static int prelu_forward(
         }
     }else{
         int16_t *ptr = top->data.data;
-        fixed_mul_t requantize = prelu->config.requantize;
+        fixed_mul_t requantize = get_fixed_mul(prelu->config.requantize);
         for(int s = 0; s < group; s ++){
             for(int j = 0; j < group_size; j++){
                 float slope = slope_data[j];

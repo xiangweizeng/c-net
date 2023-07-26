@@ -13,6 +13,7 @@ CNetLayerCase::CNetLayerCase(CNetCase* network, ncnn::Layer *layer)
         : network(network),
           layer(layer),
           data_type(network->data_type),
+          per_channel_quantize(network->per_channel_quantize),
           blobs(network->blobs),
           layers(network->layers),
           quantize(network->quantize),
