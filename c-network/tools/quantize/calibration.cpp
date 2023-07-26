@@ -374,7 +374,7 @@ int main(int argc, char **argv) {
     std::vector<std::string> image_file_path_list;
 
     /// parse the image file.
-    image_file_path_list = getall(image_folder_path.c_str(), "jpg", FILE_TYPE);
+    image_file_path_list = get_all_files(image_folder_path.c_str(), "jpg", FILE_TYPE);
 
     /// get the calibration table file, and save it.
     const int ret = post_training_quantize(

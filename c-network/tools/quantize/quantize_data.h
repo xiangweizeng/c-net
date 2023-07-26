@@ -45,7 +45,6 @@ public:
 
     float threshold;
     int threshold_bin;
-    float scale;
 };
 
 #endif //NCNN_QUANTIZE_DATA_H
