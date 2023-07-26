@@ -20,7 +20,7 @@ FUNCTION_IRAM static int memory_data_forward(
     tensor_t *top_tensor = &top_tensors->data[0].data;
 
     size_t total_size = tensor_total(top_tensor) * top_tensor->elem_size;
-    memcpy(top_tensor->data, memory_data->data.data.data, total_size);
+    memcpy(top_tensor->data, memory_data->data.data, total_size);
     return CNET_STATUS_SUCCESS;
 }
 

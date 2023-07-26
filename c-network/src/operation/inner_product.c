@@ -16,192 +16,37 @@
 #define Min(x, y) ((x) < (y) ? (x) : (y))
 #define Max(x, y) ((x) > (y) ? (x) : (y))
 
-typedef struct inner_product_context_t {
-    tensor_t *bottom_tensor;
-    inner_product_config_t config;
-    int16_t *weight_data;
-    int16_t *bias_data;
-    int16_t *out_ptr;
-} inner_product_context_t;
 
-FUNCTION_IRAM void inner_product_requantize_tile(inner_product_context_t *context, size_t p, size_t tile) {
+FUNCTION_IRAM static int inner_product_forward_impl(
+        inner_product_t *inner_product,
+        tensor_t *bottom_tensor,
+        tensor_t *top_tensor,
+        option_t *opt) {
 
-    int16_t *weight_data = context->weight_data;
-    tensor_t *bottom_tensor = context->bottom_tensor;
-    int16_t* out_ptr = (int16_t*)context->out_ptr;
+    inner_product_config_t config = inner_product->config;
 
-    int32_t size = tensor_total(bottom_tensor);
-    const int16_t *w0 = weight_data + size * p;
-    const int16_t *w1 = w0 + size;
-    const int16_t *w2 = w1 + size;
-    const int16_t *w3 = w2 + size;
-    const int16_t *v = (int16_t *) bottom_tensor->data;
+    int16_t* out_ptr = (int16_t*) top_tensor->data;
+    int16_t *w0 = inner_product->weights.data;
+    int32_t *bias = config.bias_term ? inner_product->bias.data : NULL;
+    float *requantize_data = inner_product->requantize.data;
 
-    int32_t out_max = context->config.max;
-    int32_t out_min = context->config.min;
-    fixed_mul_t requantize = context->config.requantize;
-    fixed_mul_t leaky = context->config.leaky;
+    int32_t out_max = config.max;
+    int32_t out_min = config.min;
+    int output_num = config.filers_size[3];
+    int requantize_num = config.requantize_num;
+    int32_t input_num = config.filers_size[2];
+    fixed_mul_t leaky = get_fixed_mul(config.leaky);
 
-    register int32_t compute_grid = size >> 2;
-    register int32_t remain = size & 0b11;
-    register int32_t grid_v[4] = {0};
-
-    if(tile == 4){
-        register int64_t sum0 = 0, sum1 = 0, sum2 = 0, sum3 = 0;
-        register int32_t b0 = context->config.bias_term ? context->bias_data[p] : 0;
-        register int32_t b1 = context->config.bias_term ? context->bias_data[p+1] : 0;
-        register int32_t b2 = context->config.bias_term ? context->bias_data[p+2] : 0;
-        register int32_t b3 = context->config.bias_term ? context->bias_data[p+3] : 0;
-        while (compute_grid -- > 0){
-            grid_v[0] = v[0];
-            grid_v[1] = v[1];
-            grid_v[2] = v[2];
-            grid_v[3] = v[3];
-
-            sum0 += grid_v[0] * w0[0];
-            sum1 += grid_v[0] * w1[0];
-            sum2 += grid_v[0] * w2[0];
-            sum3 += grid_v[0] * w3[0];
-
-            sum0 += grid_v[1] * w0[1];
-            sum1 += grid_v[1] * w1[1];
-            sum2 += grid_v[1] * w2[1];
-            sum3 += grid_v[1] * w3[1];
-
-            sum0 += grid_v[2] * w0[2];
-            sum1 += grid_v[2] * w1[2];
-            sum2 += grid_v[2] * w2[2];
-            sum3 += grid_v[2] * w3[2];
-
-            sum0 += grid_v[3] * w0[3];
-            sum1 += grid_v[3] * w1[3];
-            sum2 += grid_v[3] * w2[3];
-            sum3 += grid_v[3] * w3[3];
-
-            v += 4;
-            w0 += 4;
-            w1 += 4;
-            w2 += 4;
-            w3 += 4;
-        }
-
-        for (int i = 0; i < remain; i++) {
-            int32_t value = v[i];
-            sum0 += value * w0[i];
-            sum1 += value * w1[i];
-            sum2 += value * w2[i];
-            sum3 += value * w3[i];
-        }
-
-        sum0 = REQUANTIZE_BIAS(sum0, requantize, b0);
-        sum1 = REQUANTIZE_BIAS(sum1, requantize, b1);
-        sum2 = REQUANTIZE_BIAS(sum2, requantize, b2);
-        sum3 = REQUANTIZE_BIAS(sum3, requantize, b3);
-
-        sum0 = sum0 > 0 ? sum0 : MULTIPLY_FIDED(sum0, leaky);
-        sum1 = sum1 > 0 ? sum1 : MULTIPLY_FIDED(sum1, leaky);
-        sum2 = sum2 > 0 ? sum2 : MULTIPLY_FIDED(sum2, leaky);
-        sum3 = sum3 > 0 ? sum3 : MULTIPLY_FIDED(sum3, leaky);
-
-        out_ptr[p] = CLIP_INT16(sum0, out_max, out_min);
-        out_ptr[p+1] = CLIP_INT16(sum1, out_max, out_min);
-        out_ptr[p+2] = CLIP_INT16(sum2, out_max, out_min);
-        out_ptr[p+3] = CLIP_INT16(sum3, out_max, out_min);
-    } else if(tile == 3){
-        register int64_t sum0 = 0, sum1 = 0, sum2 = 0;
-        register int32_t b0 = context->config.bias_term ? context->bias_data[p] : 0;
-        register int32_t b1 = context->config.bias_term ? context->bias_data[p+1] : 0;
-        register int32_t b2 = context->config.bias_term ? context->bias_data[p+2] : 0;
-        while (compute_grid -- > 0){
-            grid_v[0] = v[0];
-            grid_v[1] = v[1];
-            grid_v[2] = v[2];
-            grid_v[3] = v[3];
-
-            sum0 += grid_v[0] * w0[0];
-            sum1 += grid_v[0] * w1[0];
-            sum2 += grid_v[0] * w2[0];
-
-            sum0 += grid_v[1] * w0[1];
-            sum1 += grid_v[1] * w1[1];
-            sum2 += grid_v[1] * w2[1];
-
-            sum0 += grid_v[2] * w0[2];
-            sum1 += grid_v[2] * w1[2];
-            sum2 += grid_v[2] * w2[2];
-
-            sum0 += grid_v[3] * w0[3];
-            sum1 += grid_v[3] * w1[3];
-            sum2 += grid_v[3] * w2[3];
-
-            v += 4;
-            w0 += 4;
-            w1 += 4;
-            w2 += 4;
-        }
-
-        for (int i = 0; i < remain; i++) {
-            int32_t value = v[i];
-            sum0 += value * w0[i];
-            sum1 += value * w1[i];
-            sum2 += value * w2[i];
-        }
-
-        sum0 = REQUANTIZE_BIAS(sum0, requantize, b0);
-        sum1 = REQUANTIZE_BIAS(sum1, requantize, b1);
-        sum2 = REQUANTIZE_BIAS(sum2, requantize, b2);
-
-        sum0 = sum0 > 0 ? sum0 : MULTIPLY_FIDED(sum0, leaky);
-        sum1 = sum1 > 0 ? sum1 : MULTIPLY_FIDED(sum1, leaky);
-        sum2 = sum2 > 0 ? sum2 : MULTIPLY_FIDED(sum2, leaky);
-
-        out_ptr[p] = CLIP_INT16(sum0, out_max, out_min);
-        out_ptr[p+1] = CLIP_INT16(sum1, out_max, out_min);
-        out_ptr[p+2] = CLIP_INT16(sum2, out_max, out_min);
-    }else if(tile == 2){
-        register int64_t sum0 = 0, sum1 = 0;
-        register int32_t b0 = context->config.bias_term ? context->bias_data[p] : 0;
-        register int32_t b1 = context->config.bias_term ? context->bias_data[p+1] : 0;
-        while (compute_grid -- > 0){
-            grid_v[0] = v[0];
-            grid_v[1] = v[1];
-            grid_v[2] = v[2];
-            grid_v[3] = v[3];
-
-            sum0 += grid_v[0] * w0[0];
-            sum1 += grid_v[0] * w1[0];
-
-            sum0 += grid_v[1] * w0[1];
-            sum1 += grid_v[1] * w1[1];
-
-            sum0 += grid_v[2] * w0[2];
-            sum1 += grid_v[2] * w1[2];
-
-            sum0 += grid_v[3] * w0[3];
-            sum1 += grid_v[3] * w1[3];
-
-            v += 4;
-            w0 += 4;
-            w1 += 4;
-        }
-
-        for (int i = 0; i < remain; i++) {
-            int32_t value = v[i];
-            sum0 += value * w0[i];
-            sum1 += value * w1[i];
-        }
-
-        sum0 = REQUANTIZE_BIAS(sum0, requantize, b0);
-        sum1 = REQUANTIZE_BIAS(sum1, requantize, b1);
-
-        sum0 = sum0 > 0 ? sum0 : MULTIPLY_FIDED(sum0, leaky);
-        sum1 = sum1 > 0 ? sum1 : MULTIPLY_FIDED(sum1, leaky);
-
-        out_ptr[p] = CLIP_INT16(sum0, out_max, out_min);
-        out_ptr[p+1] = CLIP_INT16(sum1, out_max, out_min);
-    }else if(tile == 1){
+    for(int p = 0; p < output_num; p ++){
         register int64_t sum0 = 0;
-        register int32_t b0 = context->config.bias_term ? context->bias_data[p] : 0;
+        register int32_t b0 = bias ? bias[p] : 0;
+        const int16_t *v = (int16_t *) bottom_tensor->data;
+        float output_scale = requantize_num > 1 ? requantize_data[p] : requantize_data[0];
+        fixed_mul_t requantize = get_fixed_mul(output_scale);
+
+        register int32_t compute_grid = input_num >> 2;
+        register int32_t remain = input_num & 0b11;
+
         while (compute_grid -- > 0){
             sum0 += v[0] * w0[0];
             sum0 += v[1] * w0[1];
@@ -216,30 +61,12 @@ FUNCTION_IRAM void inner_product_requantize_tile(inner_product_context_t *contex
             int32_t value = v[i];
             sum0 += value * w0[i];
         }
+        w0 += remain;
 
         sum0 = REQUANTIZE_BIAS(sum0, requantize, b0);
         sum0 = sum0 > 0 ? sum0 : MULTIPLY_FIDED(sum0, leaky);
         out_ptr[p] = CLIP_INT16(sum0, out_max, out_min);
     }
-}
-
-
-FUNCTION_IRAM static int inner_product_forward_impl(
-        inner_product_t *inner_product,
-        tensor_t *bottom_tensor,
-        tensor_t *top_tensor,
-        option_t *opt) {
-
-    inner_product_context_t context_mul = {
-            bottom_tensor,
-            inner_product->config,
-            inner_product->weights.data.data,
-            inner_product->bias.data.data,
-            top_tensor->data,
-    };
-
-    int output_num = inner_product->config.filers_size[3];
-    PARALLELIZE_1D_TILE_1D(inner_product_requantize_tile, context_mul, output_num, 4);
     return CNET_STATUS_SUCCESS;
 }
 

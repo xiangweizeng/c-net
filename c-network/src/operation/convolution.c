@@ -18,13 +18,15 @@ typedef struct convolution_context {
     tensor_t* bottom;
     tensor_t* top;
     const int16_t* weight_data;
-    const int16_t* bias_data;
+    const int32_t* bias_data;
+    const float* requantize_data;
     int out_w;
     int out_h;
 }convolution_context_t;
 
 FUNCTION_IRAM int dotprod(const int16_t *src1, const int16_t *src2, int64_t *dest, int len, int8_t shift){
     int64_t inner_dot = 0;
+
     for(int i = 0; i < len; i++){
         inner_dot += src1[i] * src2[i];
     }
@@ -34,11 +36,12 @@ FUNCTION_IRAM int dotprod(const int16_t *src1, const int16_t *src2, int64_t *des
 
 FUNCTION_IRAM static void int16_conv(convolution_context_t* context) {
 
-    fixed_mul_t requantize = context->config.requantize;
-    fixed_mul_t leaky = context->config.leaky;
+    const float *requantize_data = context->requantize_data;
+    fixed_mul_t leaky = get_fixed_mul(context->config.leaky);
 
     int32_t out_max = context->config.max;
     int32_t out_min = context->config.min;
+    int requantize_num = context->config.requantize_num;
 
     int input_w = context->bottom->d1;
     int input_h = context->bottom->d2;
@@ -97,6 +100,8 @@ FUNCTION_IRAM static void int16_conv(convolution_context_t* context) {
             for (size_t p = 0; p < output_c; p++)
             {
                 int32_t bias_value = context->config.bias_term ? context->bias_data[p] : 0;
+                float output_scale = requantize_num > 1 ? requantize_data[p] : requantize_data[0];
+                fixed_mul_t requantize = get_fixed_mul(output_scale);
                 const int16_t *w0 = context->weight_data + kernel_3d_size * p;
 
                 int64_t sum = 0;
@@ -114,11 +119,12 @@ FUNCTION_IRAM static void int16_conv(convolution_context_t* context) {
 
 FUNCTION_IRAM static void group_conv(convolution_context_t* context, size_t g) {
 
-    fixed_mul_t requantize = context->config.requantize;
-    fixed_mul_t leaky = context->config.leaky;
+    const float *requantize_data = context->requantize_data;
+    fixed_mul_t leaky = get_fixed_mul(context->config.leaky);
 
     int32_t out_max = context->config.max;
     int32_t out_min = context->config.min;
+    int requantize_num = context->config.requantize_num;
 
     int input_w = context->bottom->d1;
     int input_h = context->bottom->d2;
@@ -174,21 +180,20 @@ FUNCTION_IRAM static void group_conv(convolution_context_t* context, size_t g) {
                         int offset = (in_y * input_w + in_x) * input_c + g * input_group_size;
                         for(int p_c = 0; p_c < input_group_size; p_c ++){
                             rows[p_c] = input[offset + p_c];
-//                            printf("%d ", input[offset + p_c]);
                         }
                         rows += input_group_size;
                     }
                 }
             }
 
-//            cache_row.layout = TENSOR_LAYOUT_NCHW;
-//            tensor_print(&cache_row);
-
             int16_t* out_ptr = (int16_t*)context->top->data + (oy * context->out_w + ox) * output_c + g * output_group_size;
             for (int p = 0; p < output_group_size; p++) {
 
                 const int16_t* w = weight_data + kernel_3d_size * p;
-                int32_t bias_value = context->config.bias_term ? context->bias_data[g * output_group_size + p] : 0;
+                int32_t c_offset = g * output_group_size + p;
+                int32_t bias_value = context->config.bias_term ? context->bias_data[c_offset] : 0;
+                float output_scale = requantize_num > 1 ? requantize_data[c_offset] : requantize_data[0];
+                fixed_mul_t requantize = get_fixed_mul(output_scale);
 
                 int64_t sum = 0;
                 dotprod(cache_row.data, w, &sum, kernel_3d_size, 0);
@@ -214,14 +219,13 @@ FUNCTION_IRAM static int convolution_forward(
     tensor_t *top_tensor = &top_tensors->data[0].data;
 
     /// prepare context
-    const int16_t* weight_data = (const int16_t*)convolution->filters.data.data;
-    const int16_t* bias_data = (const int16_t*)convolution->bias.data.data;
     convolution_context_t int16_context = {
             convolution->config,
             bottom_tensor,
             top_tensor,
-            weight_data,
-            bias_data,
+            convolution->filters.data,
+            convolution->bias.data,
+            convolution->requantize.data,
             top_tensor->d1,
             top_tensor->d2,
     };

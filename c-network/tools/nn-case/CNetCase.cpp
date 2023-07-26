@@ -37,34 +37,51 @@ static std::string string_upper(std::string in_string){
     return in_string;
 }
 
-void write_weights_data(ncnn::Mat weights, FILE* cpp, const std::string& param_var)
+void write_weights_data(const QuantizeMat &weights, FILE* cpp, const std::string& param_var)
 {
     fprintf(cpp, "\n__attribute__((aligned(4))) \n");
 
-    size_t size = weights.total() * weights.elemsize;
+    size_t size = weights.data.total() * weights.data.elemsize;
     if(size > 0){
         fprintf(cpp, "static const unsigned char %s_data[] = {\n", param_var.c_str());
-        unsigned char* data = weights;
+        const unsigned char* data = weights.data;
+        int count = 0;
         for (size_t i = 0; i < size; i++) {
             fprintf(cpp, "0x%02x,", data[i]);
 
-            if ((i + 1) % 32 == 0) {
+            count ++;
+            if (count % 32 == 0) {
+                count = 0;
                 fprintf(cpp, "\n");
             }
         }
+
+        for (size_t i = 0; i < weights.extra; i++) {
+            fprintf(cpp, "0x%02x,", 0);
+
+            count ++;
+            if (count % 32 == 0) {
+                count = 0;
+                fprintf(cpp, "\n");
+            }
+        }
+
         fprintf(cpp, "};\n");
+        fprintf(cpp, "DEFINE_TENSOR(%s, %zu, %d, %zu, %s_data)",
+                param_var.c_str(),
+                weights.data.elemsize, weights.data_type, size,
+                param_var.c_str());
     } else{
         fprintf(cpp, "static const unsigned char* %s_data[] = NULL;\n", param_var.c_str());
+        fprintf(cpp, "DEFINE_TENSOR(%s, 0, 0, 0, %s_data)", param_var.c_str(), param_var.c_str());
     }
-
-    fprintf(cpp, "DEFINE_TENSOR(%s, %zu, %s_data, %f)", param_var.c_str(), size, param_var.c_str(), 1.f);
 }
 
 CNetCase::CNetCase(data_type_t data_type)
         : data_type(data_type),
           blobs(mutable_blobs()),
           layers(mutable_layers()),
-          quantize(CNetQuantizer::makeQuantizer(data_type)) {
+          quantize(CNetQuantize::makeQuantize(data_type)) {
     opt.lightmode = false;
 }
 
@@ -174,7 +191,8 @@ bool CNetCase::fix_blob_scales() {
     for (auto layer : layers) {
        if(layer->type == "MemoryData"){
            auto *md = dynamic_cast<ncnn::MemoryData *>(layer);
-           blob_scale_table[blobs[md->tops[0]].name] = quantize->get_scaled(md->data);
+           ncnn::Mat scaled = quantize->get_channels_scaled(md->data);
+           blob_scale_table[blobs[md->tops[0]].name] = scaled[0];
        }
     }
 

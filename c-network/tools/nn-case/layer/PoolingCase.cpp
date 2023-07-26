@@ -82,10 +82,6 @@ bool PoolingCase::get_layer_define(std::string &layer_define) {
     int inw = (int)pool->bottom_shapes[0].w;
     int inh = (int)pool->bottom_shapes[0].h;
 
-    float input_scale = case_blobs[input].scale;
-    float output_scale = case_blobs[output].scale;
-    fixed_mul_t requantize = get_fixed_mul(output_scale / (input_scale));
-
     int16_t pad_value = 0;
     if (pool->pooling_type == ncnn::Pooling::PoolMethod_MAX)
     {
@@ -100,13 +96,12 @@ bool PoolingCase::get_layer_define(std::string &layer_define) {
             " %d, %d, %d, %d, %d,"
             " %d,"
             " %d, %d, %d, %d, %hd,"
-            " %d, %d, %d);\n",
+            " %d);\n",
             pool->name.c_str(),
             pool->pooling_type, pool->kernel_w, pool->kernel_h, pool->stride_w, pool->stride_h,
             pool->global_pooling,
             padding[0], padding[1], padding[2], padding[3], pad_value,
-            pool->avgpool_count_include_pad, requantize.round_mul, requantize.shift
-            );
+            pool->avgpool_count_include_pad);
 
     layer_define = buffer;
 

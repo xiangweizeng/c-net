@@ -17,7 +17,7 @@
 #include <operation_config.h>
 #include <blob.h>
 #include "layer.h"
-#include "CNetQuantizer.h"
+#include "CNetQuantize.h"
 
 /**
  * CNetCase
@@ -85,7 +85,7 @@ protected:
     std::vector<ncnn::Layer*>& layers;
 
     /// quantize
-    std::shared_ptr<CNetQuantizer> &quantize;
+    std::shared_ptr<CNetQuantize> &quantize;
 
     /// blob infos
     std::map<std::string, blob_info_t> &case_blobs;
@@ -97,7 +97,7 @@ protected:
     std::map<std::string, float> &blob_scale_table;
 
     /// quantize weights
-    std::map<std::string, ncnn::Mat> &quantize_data_weights;
+    std::map<std::string, QuantizeMat> &quantize_data_weights;
 };
 
 /// Case pointer

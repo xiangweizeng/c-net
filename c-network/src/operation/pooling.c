@@ -20,7 +20,6 @@ FUNCTION_IRAM static int global_pooling_forward(pooling_t *pooling, tensor_t *bo
     int channels = bottom_tensor->d0;
     int input_w = bottom_tensor->d1;
     int input_h = bottom_tensor->d2;
-    fixed_mul_t requantize =  pooling->config.requantize;
 
     int16_t *output = top_tensor->data;
     int16_t *input = bottom_tensor->data;
@@ -35,7 +34,7 @@ FUNCTION_IRAM static int global_pooling_forward(pooling_t *pooling, tensor_t *bo
                 }
             }
 
-            output[c] = MULTIPLY_FIDED(max, requantize);
+            output[c] = max;
         }
     } else if (pooling->config.pooling_type == pool_method_avg_type) {
         int size = input_w * input_h;
@@ -49,7 +48,7 @@ FUNCTION_IRAM static int global_pooling_forward(pooling_t *pooling, tensor_t *bo
             }
 
             sum = sum / size;
-            output[c] = MULTIPLY_FIDED(sum, requantize);
+            output[c] = sum, INT16_MAX, INT16_MIN;
         }
     }
 
@@ -87,7 +86,7 @@ FUNCTION_IRAM static void normal_pool_max(normal_pooling_context_t *context) {
 
             int16_t *points_output = out_ptr + ( oy * context->out_w + ox) * channels;
             for(int32_t oc = 0; oc < channels; oc ++){
-                int32_t value = INT16_MIN;
+                int16_t value = INT16_MIN;
                 for (int32_t ky = filter_y_start; ky < filter_y_end; ky++)
                 {
                     for (int32_t kx = filter_x_start; kx < filter_x_end; kx++)
@@ -100,9 +99,7 @@ FUNCTION_IRAM static void normal_pool_max(normal_pooling_context_t *context) {
                         value = Max(value, in_v);
                     }
                 }
-
-                value =  MULTIPLY_FIDED(value, context->config.requantize);
-                points_output[oc] = CLIP_INT16(value, INT16_MAX, INT16_MIN);
+                points_output[oc] = value;
             }
         }
     }
@@ -150,8 +147,7 @@ FUNCTION_IRAM static void normal_pool_ave(normal_pooling_context_t *context) {
                 kernel_count = context->config.count_include_pad ? all_kernel_count : kernel_count;
                 value = kernel_count > 0 ? value / kernel_count : 0;
 
-                value = MULTIPLY_FIDED(value, context->config.requantize);
-                points_output[oc] = CLIP_INT16(value, INT16_MAX, INT16_MIN);
+                points_output[oc] = value;
             }
         }
     }

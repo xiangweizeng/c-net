@@ -19,9 +19,12 @@ bool SliceCase::ignore() {
 }
 
 bool SliceCase::quantize_weights() {
-    ncnn::Slice *sl = dynamic_cast<ncnn::Slice *>(layer);
+    auto *sl = dynamic_cast<ncnn::Slice *>(layer);
+
     std::string param_var = "layer_" + layer->name + "_slice_slices";
-    quantize_data_weights[param_var] = sl->slices.clone();
+    QuantizeMat quantize_slices(sl->slices, int32_data_type);
+    quantize_data_weights[param_var] = quantize_slices;
+
     return true;
 }
 
@@ -30,16 +33,9 @@ bool SliceCase::get_layer_define(std::string &layer_define) {
     std::string input = get_blob_input_name(0);
     std::string output = get_blob_output_name(0);
 
-    ncnn::Slice *sl = dynamic_cast<ncnn::Slice *>(layer);
-    float input_scale = case_blobs[input].scale;
-    float output_scale = case_blobs[output].scale;
-
-    fixed_mul_t requantize = get_fixed_mul(output_scale / (input_scale));
+    auto *sl = dynamic_cast<ncnn::Slice *>(layer);
     char buffer[1024] = {0};
-    sprintf(buffer,
-            "DEFINE_SLICE_LAYER(%s, %d, %d, %d);\n",
-            sl->name.c_str(), sl->axis, requantize.round_mul, requantize.shift
-    );
+    sprintf(buffer, "DEFINE_SLICE_LAYER(%s, %d);\n", sl->name.c_str(), sl->axis);
 
     layer_define = buffer;
 

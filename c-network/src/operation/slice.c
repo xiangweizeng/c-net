@@ -21,7 +21,7 @@ FUNCTION_IRAM static int slice_forward(
     tensor_t *bottom_tensor = &bottom_tensors->data[0].data;
     int dims = bottom_tensor->dims;
     size_t elem_size = bottom_tensor->elem_size;
-    const int* slices_ptr = (int*)slice->slices.data.data;
+    const int* slices_ptr = (int*)slice->slices.data;
 
     /// axis == 0
     if (dims == 1)

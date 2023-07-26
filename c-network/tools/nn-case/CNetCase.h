@@ -21,7 +21,7 @@
 #include "layer_type.h"
 #include "net.h"
 
-#include "CNetQuantizer.h"
+#include "CNetQuantize.h"
 
 /// Case pointer
 class CNetLayerCase;
@@ -130,7 +130,7 @@ protected:
     std::map<ncnn::Layer*, PCNetLayerCase> case_layers;
 
     /// quantize
-    std::shared_ptr<CNetQuantizer> quantize;
+    std::shared_ptr<CNetQuantize> quantize;
 
     /// blob infos
     std::map<std::string, blob_info_t> case_blobs;
@@ -145,7 +145,7 @@ protected:
     std::map<std::string, float> blob_scale_table;
 
     /// quantize weights
-    std::map<std::string, ncnn::Mat> quantize_weights;
+    std::map<std::string, QuantizeMat> quantize_weights;
 
 protected:
     friend class CNetLayerCase;

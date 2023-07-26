@@ -26,7 +26,8 @@ bool InnerProductCase::quantize_weights() {
     auto *ip = dynamic_cast<ncnn::InnerProduct *>(layer);
 
     float output_scale = case_blobs[output].scale;
-    float weight_scale = quantize->get_scaled(ip->weight_data);
+    float input_scale = case_blobs[input].scale;
+    ncnn::Mat weight_scale = quantize->get_channels_scaled(ip->weight_data);
     std::string param_var = "layer_" + ip->name + "_inner_product_filters";
     auto quantize_data = quantize->do_quantize(ip->weight_data, weight_scale);
 
@@ -38,14 +39,26 @@ bool InnerProductCase::quantize_weights() {
 
         quantize_data = quantize->permute(quantize_data, n, h, w, c);
     }
-    quantize_data_weights[param_var] = quantize_data;
+    quantize_data_weights[param_var] = QuantizeMat(quantize_data, data_type);
 
     param_var = "layer_" + ip->name + "_inner_product_bias";
     if (ip->bias_term) {
-        quantize_data_weights[param_var] = quantize->do_quantize(ip->bias_data, output_scale);
+        ncnn::Mat output_quantize_data;
+        output_quantize_data.create(1, 4u, nullptr);
+        output_quantize_data[0] = output_scale;
+
+        quantize_data_weights[param_var] = QuantizeMat(
+                quantize->do_quantize_s32(ip->bias_data, output_quantize_data),
+                int32_data_type);
     } else{
-        quantize_data_weights[param_var] = ncnn::Mat();
+        quantize_data_weights[param_var] = QuantizeMat();
     }
+
+    param_var = "layer_" + ip->name + "_inner_product_requantize";
+    for(size_t i = 0; i < weight_scale.total(); i++){
+        weight_scale[i] = output_scale / (weight_scale[i] * input_scale);
+    }
+    quantize_data_weights[param_var] = QuantizeMat(weight_scale, float_data_type);
 
     return true;
 }
@@ -58,40 +71,36 @@ bool InnerProductCase::get_layer_define(std::string &layer_define) {
     int inw = (int)ip->bottom_shapes[0].w;
     int inh = (int)ip->bottom_shapes[0].h;
     int inc = (int)ip->bottom_shapes[0].c;
-
-    float input_scale = case_blobs[input].scale;
     float output_scale = case_blobs[output].scale;
-    float weight_scale = quantize->get_scaled(ip->weight_data);
-    fixed_mul_t requantize = get_fixed_mul(output_scale / (input_scale * weight_scale));
 
     int32_t max;
     int32_t min;
-    fixed_mul_t leaky;
+    float leaky;
     switch (ip->activation_type)
     {
         case 0:
         {
-            min = INT16_MIN;
-            max = INT16_MAX;
-            leaky = get_fixed_mul(1.f);
+            min = quantize->get_number_min();
+            max = quantize->get_number_max();
+            leaky = (1.f);
             break;
         }
         case 1: {
             min = 0;
-            max = INT16_MAX;
-            leaky = get_fixed_mul(1.f);
+            max = quantize->get_number_max();
+            leaky = (1.f);
             break;
         }
         case 2: {
-            min = INT16_MIN;
-            max = INT16_MAX;
-            leaky = get_fixed_mul(ip->activation_params[0]);
+            min = quantize->get_number_min();
+            max = quantize->get_number_max();
+            leaky = (ip->activation_params[0]);
             break;
         }
         case 3: {
-            min = ip->activation_params[0]*output_scale;
-            max = ip->activation_params[1]*output_scale;
-            leaky = get_fixed_mul(1.f);
+            min = quantize->float2int(ip->activation_params[0]*output_scale);
+            max = quantize->float2int(ip->activation_params[1]*output_scale);
+            leaky = (1.f);
             break;
         }
         default:
@@ -100,15 +109,14 @@ bool InnerProductCase::get_layer_define(std::string &layer_define) {
     }
 
     char buffer[1024] = {0};
+    int req_num = 1;
     sprintf(buffer,
             "DEFINE_INNER_PRODUCT_LAYER(%s,"
             " %d, %d, %d, %d, %d,"
-            " %d, %d, %d, %d, %d, %d);\n",
+            " %d, %f, %d, %d);\n",
             ip->name.c_str(),
             1, 1, inw * inh * inc, ip->num_output, ip->bias_term,
-            requantize.round_mul, requantize.shift,
-            leaky.round_mul, leaky.shift,
-            max, min);
+            req_num, leaky, max, min);
 
     layer_define = buffer;
     return true;

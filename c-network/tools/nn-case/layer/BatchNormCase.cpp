@@ -23,15 +23,26 @@ bool BatchNormCase::quantize_weights() {
     std::string input = get_blob_input_name(0);
     std::string output = get_blob_output_name(0);
 
-    ncnn::BatchNorm * bn = (ncnn::BatchNorm*)layer;
-
+    auto * bn = (ncnn::BatchNorm*)layer;
+    float input_scale = case_blobs[input].scale;
     float output_scale = case_blobs[output].scale;
-    float weight_scale = quantize->get_scaled(bn->b_data);
+
+    ncnn::Mat scaled_data = bn->b_data.clone();
+
+    for(int i = 0; i < scaled_data.total(); i++){
+        scaled_data[i] = (scaled_data[i] * output_scale) / input_scale;
+    }
+    QuantizeMat scaled_quantize_data(scaled_data, float_data_type);
     std::string param_var = "layer_" + bn->name + "_batch_norm_scale";
-    quantize_data_weights[param_var] = quantize->do_quantize(bn->b_data, weight_scale);
+    quantize_data_weights[param_var] = scaled_quantize_data;
 
     param_var = "layer_" + bn->name + "_batch_norm_offset";
-    quantize_data_weights[param_var] = quantize->do_quantize(bn->a_data, output_scale);
+    ncnn::Mat output_quantize_data;
+    output_quantize_data.create(1, 4u, nullptr);
+    output_quantize_data[0] = output_scale;
+    quantize_data_weights[param_var] = QuantizeMat(
+            quantize->do_quantize_s32(bn->a_data, output_quantize_data),
+            data_type);
 
     return true;
 }
@@ -40,15 +51,9 @@ bool BatchNormCase::get_layer_define(std::string &layer_define) {
     std::string input = get_blob_input_name(0);
     std::string output = get_blob_output_name(0);
 
-    ncnn::BatchNorm * bn = (ncnn::BatchNorm*)layer;
-    float input_scale = case_blobs[input].scale;
-    float output_scale = case_blobs[output].scale;
-    float weight_scale = quantize->get_scaled(bn->b_data);
-    fixed_mul_t requantize = get_fixed_mul(output_scale / (input_scale * weight_scale));
-
+    auto * bn = (ncnn::BatchNorm*)layer;
     char buffer[1024] = {0};
-    sprintf(buffer, "DEFINE_BATCH_NORM_LAYER(%s, %d,%d);\n",
-            bn->name.c_str(), requantize.round_mul, requantize.shift);
+    sprintf(buffer, "DEFINE_BATCH_NORM_LAYER(%s);\n", bn->name.c_str());
     layer_define = buffer;
 
     return false;

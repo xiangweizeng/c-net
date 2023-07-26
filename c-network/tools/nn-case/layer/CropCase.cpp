@@ -29,7 +29,7 @@ bool CropCase::quantize_weights() {
 
 bool CropCase::get_layer_define(std::string &layer_define) {
 
-    ncnn::Crop *crop = dynamic_cast<ncnn::Crop *>(layer);
+    auto *crop = dynamic_cast<ncnn::Crop *>(layer);
     std::string input = get_blob_input_name(0);
     std::string output = get_blob_output_name(0);
 
@@ -48,9 +48,9 @@ bool CropCase::get_layer_define(std::string &layer_define) {
     crop_roi(crop, dims, _woffset, _hoffset, _coffset, _outw, _outh, _outc);
 
     char buffer[1024] = {0};
-    sprintf(buffer, "DEFINE_CROP_LAYER(%s,%d, %d, %d, %d, %d, %d, %d, %d, %d);\n",
+    sprintf(buffer, "DEFINE_CROP_LAYER(%s,%d, %d, %d, %d, %d, %d, %d);\n",
             crop->name.c_str(),
-            dims, _woffset, _hoffset, _coffset, _outw, _outh, _outc, requantize.round_mul,  requantize.shift);
+            dims, _woffset, _hoffset, _coffset, _outw, _outh, _outc);
     layer_define = buffer;
     return true;
 }
