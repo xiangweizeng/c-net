@@ -141,4 +141,4 @@ register_component()
 configure_file(c-network/src/operation_registry.c.in 
             ${CMAKE_CURRENT_SOURCE_DIR}/c-network/src/operation_registry.c)
 add_definitions(-DESP32)
-add_definitions(-Wall -Wno-unused-function -Ofast)
+target_compile_options(${COMPONENT_LIB} PRIVATE  -O2 -Wno-unused-function)

@@ -116,7 +116,7 @@ void tensor_print_int32(tensor_t *tensor){
             int32_t *data = (int32_t*) m.data;
             for(int h = 0; h < m.d1; h++){
                 for(int w = 0; w < m.d0; w ++){
-                    printf("%d,", data[h*m.d0 + w]);
+                    printf("%ld,", data[h*m.d0 + w]);
                 }
                 printf("\n");
             }
@@ -256,7 +256,7 @@ void tensor_set_data_type(tensor_t *tensor, tensor_data_type_t data_type)
     tensor->data_type = data_type;
 }
 
-FUNCTION_IRAM tensor_shape_t tensor_get_shape(tensor_t *tensor)
+tensor_shape_t tensor_get_shape(tensor_t *tensor)
 {
     tensor_shape_t shape;
     shape.dims = tensor->dims;
@@ -268,7 +268,7 @@ FUNCTION_IRAM tensor_shape_t tensor_get_shape(tensor_t *tensor)
     return  shape;
 }
 
-FUNCTION_IRAM tensor_t tensor_clone(tensor_t *tensor) {
+tensor_t tensor_clone(tensor_t *tensor) {
     if (tensor_empty(tensor)) {
         return tensor_create_default();
     }
@@ -635,7 +635,7 @@ tensor_t tensor_from_float16(const unsigned short *data, int size, allocator_t *
     return m;
 }
 
-FUNCTION_IRAM tensor_t tensor_chw2hwc(tensor_t *chw, option_t *opt)
+tensor_t tensor_chw2hwc(tensor_t *chw, option_t *opt)
 {
     if(chw->layout != TENSOR_LAYOUT_NCHW){
         tensor_add_ref(chw);
