@@ -48,7 +48,7 @@ FUNCTION_IRAM static int global_pooling_forward(pooling_t *pooling, tensor_t *bo
             }
 
             sum = sum / size;
-            output[c] = sum, INT16_MAX, INT16_MIN;
+            output[c] = sum;
         }
     }
 
