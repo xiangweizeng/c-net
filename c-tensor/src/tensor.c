@@ -369,7 +369,7 @@ void tensor_create_1d(tensor_t *tensor, int w, size_t elem_size, allocator_t *al
 
     if (tensor_total(tensor) > 0) {
 
-        malloc_func malloc_fun = allocator_get_malloc_fun(tensor->allocator, tensor->elem_size == 4);
+        malloc_func malloc_fun = allocator_get_malloc_fun(tensor->allocator, 1);
         size_t totalsize = tensor_total(tensor) * elem_size  + NHWC_EXTRA_BYTES;
         totalsize = align_size(totalsize, 4);
         tensor->data = malloc_fun(totalsize + (int) sizeof(*tensor->refcount));
@@ -405,7 +405,7 @@ void tensor_create_2d(tensor_t *tensor, int w, int h, size_t elem_size, allocato
 
     if (tensor_total(tensor) > 0) {
 
-        malloc_func malloc_fun = allocator_get_malloc_fun(tensor->allocator, tensor->elem_size == 4);
+        malloc_func malloc_fun = allocator_get_malloc_fun(tensor->allocator, 1);
         size_t totalsize = tensor_total(tensor) * elem_size  + NHWC_EXTRA_BYTES;
         totalsize = align_size(totalsize, 4);
         tensor->data = malloc_fun(totalsize + (int) sizeof(*tensor->refcount));
@@ -441,7 +441,7 @@ void tensor_create_3d(tensor_t *tensor, int w, int h, int c, size_t elem_size, a
     if (tensor_total(tensor) > 0) {
         size_t totalsize = tensor_total(tensor) * elem_size + NHWC_EXTRA_BYTES;
         totalsize = align_size(totalsize, 4);
-        malloc_func malloc_fun = allocator_get_malloc_fun(tensor->allocator, tensor->elem_size == 4);
+        malloc_func malloc_fun = allocator_get_malloc_fun(tensor->allocator, 1);
         tensor->data = malloc_fun(totalsize + (int) sizeof(*tensor->refcount));
         if(NULL != tensor->data){
             tensor->refcount = (int *) (((unsigned char *) tensor->data) + totalsize);
@@ -516,7 +516,7 @@ inline void tensor_add_ref(tensor_t *tensor) {
 // refcount--
 void tensor_release(tensor_t *tensor) {
     if (tensor->refcount && CNET_XADD(tensor->refcount, -1) == 1) {
-        free_func free_fun = allocator_get_free_fun(tensor->allocator, tensor->elem_size == 4);
+        free_func free_fun = allocator_get_free_fun(tensor->allocator, 1);
         free_fun(tensor->data);
     }
 
@@ -691,7 +691,7 @@ tensor_t tensor_chw2hwc(tensor_t *chw, option_t *opt)
 }
 
 
-FUNCTION_IRAM tensor_t tensor_hwc2chw(tensor_t *hwc, option_t *opt)
+tensor_t tensor_hwc2chw(tensor_t *hwc, option_t *opt)
 {
     if(hwc->layout != TENSOR_LAYOUT_NHWC){
         tensor_add_ref(hwc);
