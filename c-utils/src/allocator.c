@@ -79,9 +79,9 @@ FUNCTION_IRAM void fast_free(void* ptr){
  * @return
  */
 FUNCTION_IRAM  void *fast_malloc_align32(size_t size) {
-    char *r = (char*)malloc(size + 4u);
+    char *r = (char*)malloc(size + 16u);
     if(NULL != r){
-        size_t pre = 4 - (size_t)r % 4;
+        size_t pre = 16 - ((size_t)r & 0x0f);
         r += pre;
         r[-1] = pre;
     }
@@ -94,14 +94,14 @@ FUNCTION_IRAM  void *fast_malloc_align32(size_t size) {
  * @param ptr
  */
 FUNCTION_IRAM void fast_free_align32(void *ptr) {
-    if (ptr && 0 == (size_t)ptr % 4) {
+    if (ptr && 0 == ((size_t)ptr & 0x0f)) {
         char *r = (char*)ptr;
         r -= r[-1];
         heap_caps_free(r);
     }
 }
 
-FUNCTION_IRAM void * extermal_memory_malloc(size_t size){
+FUNCTION_IRAM void * external_memory_malloc(size_t size){
     return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
 }
 
@@ -110,8 +110,8 @@ FUNCTION_IRAM esp_external_ram_allocator_t *esp_external_ram_allocator_create()
     DATA_DRAM static esp_external_ram_allocator_t  allocator;
     allocator.base.free = fast_free;
     allocator.base.free_align32 = fast_free;
-    allocator.base.malloc = extermal_memory_malloc;
-    allocator.base.malloc_align32 = extermal_memory_malloc;
+    allocator.base.malloc = external_memory_malloc;
+    allocator.base.malloc_align32 = external_memory_malloc;
     return  &allocator;
 }
 

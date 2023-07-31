@@ -217,7 +217,7 @@ void get_affine_matrix_from_4p(float *src_4pts, const float *dst_4pts, float *M)
             _sqloss += ((pts0[0] + pts1[i] - dst[i]) * (pts0[0] + pts1[i] - dst[i])
                         + (pts0[1] + pts1[i + 4] - dst[i + 4]) * (pts0[1] + pts1[i + 4] - dst[i + 4]));
         }
-        if (abs(_sqloss - sqloss) < 1e-2) {
+        if (fabs(_sqloss - sqloss) < 1e-2) {
             break;
         }
         sqloss = _sqloss;
