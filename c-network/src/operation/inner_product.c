@@ -25,8 +25,8 @@ FUNCTION_IRAM static int inner_product_forward_impl(
 
     inner_product_config_t config = inner_product->config;
 
-    int16_t* out_ptr = (int16_t*) top_tensor->data;
-    int16_t *w0 = inner_product->weights.data;
+    int8_t* out_ptr = (int8_t*) top_tensor->data;
+    int8_t *w0 = inner_product->weights.data;
     int32_t *bias = config.bias_term ? inner_product->bias.data : NULL;
     float *requantize_data = inner_product->requantize.data;
 
@@ -38,9 +38,9 @@ FUNCTION_IRAM static int inner_product_forward_impl(
     fixed_mul_t leaky = get_fixed_mul(config.leaky);
 
     for(int p = 0; p < output_num; p ++){
-        register int64_t sum0 = 0;
+        register int32_t sum0 = 0;
         register int32_t b0 = bias ? bias[p] : 0;
-        const int16_t *v = (int16_t *) bottom_tensor->data;
+        const int8_t *v = (int8_t *) bottom_tensor->data;
         float output_scale = requantize_num > 1 ? requantize_data[p] : requantize_data[0];
         fixed_mul_t requantize = get_fixed_mul(output_scale);
 
@@ -65,7 +65,7 @@ FUNCTION_IRAM static int inner_product_forward_impl(
 
         sum0 = REQUANTIZE_BIAS(sum0, requantize, b0);
         sum0 = sum0 > 0 ? sum0 : MULTIPLY_FIDED(sum0, leaky);
-        out_ptr[p] = CLIP_INT16(sum0, out_max, out_min);
+        out_ptr[p] = CLIP_INT8(sum0, out_max, out_min);
     }
     return CNET_STATUS_SUCCESS;
 }

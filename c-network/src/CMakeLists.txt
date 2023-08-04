@@ -49,7 +49,7 @@ set(BASE_SRCS
         "operation.c"
         "network.c"
         "operation_benchmark.c"
-        "quantize16.c"
+        "quantize_s8.c"
         "operation_registry.c")
 
 add_library(c-network ${BASE_SRCS} ${cnet_SRCS})

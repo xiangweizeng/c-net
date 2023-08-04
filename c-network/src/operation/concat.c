@@ -20,7 +20,7 @@ FUNCTION_IRAM static int concat_forward(
     concat_config_t config = concat->config;
     tensor_t *top_tensor = &top_tensors->data[0].data;
 
-    int16_t* output = (int16_t*)top_tensor->data;
+    int8_t* output = (int8_t*)top_tensor->data;
     const int* out_shape = top_tensors->data[0].blob->shape;
 
     register int b, concat_start = 0, axis = config.axis;
@@ -32,7 +32,7 @@ FUNCTION_IRAM static int concat_forward(
             return CNET_STATUS_FAILED;
         }
 
-        int16_t* input = (int16_t*)input_matrix->data;
+        int8_t* input = (int8_t*)input_matrix->data;
         fixed_mul_t fixed = get_fixed_mul(config.output_requantize[b]);
 
         blob_shape_t i; i[0] = 0;

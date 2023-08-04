@@ -16,7 +16,7 @@
 #define Min(x, y) ((x) < (y) ? (x) : (y))
 #define Max(x, y) ((x) > (y) ? (x) : (y))
 
-static void copy_cut_border_image_int16(
+static void copy_cut_border_image_int8(
         const tensor_t *src,
         tensor_t *dst,
         int top,
@@ -28,9 +28,9 @@ static void copy_cut_border_image_int16(
     int c = dst->d0;
     int ic = src->d0;
 
-    int16_t *out_ptr = dst->data;
+    int8_t *out_ptr = dst->data;
     for (int y = 0; y < h; y++) {
-        const int16_t *ptr = ((int16_t *) src->data) + ((top + y) * src->d1 + left) * src->d0;
+        const int8_t *ptr = ((int8_t *) src->data) + ((top + y) * src->d1 + left) * src->d0;
         for (int x = 0; x < w; x++) {
             for(int z = 0; z < c; z++){
                 out_ptr[z] = ptr[z + front];
@@ -52,19 +52,19 @@ static int crop_forward_impl(
 
     if (config.dims == 1)
     {
-        copy_cut_border_image_int16(bottom_tensor, top_tensor, 0, config.w_offset, 0);
+        copy_cut_border_image_int8(bottom_tensor, top_tensor, 0, config.w_offset, 0);
         return CNET_STATUS_SUCCESS;
     }
 
     if (config.dims == 2)
     {
-        copy_cut_border_image_int16(bottom_tensor, top_tensor, config.h_offset, config.w_offset, 0);
+        copy_cut_border_image_int8(bottom_tensor, top_tensor, config.h_offset, config.w_offset, 0);
         return CNET_STATUS_SUCCESS;
     }
 
     if (config.dims == 3)
     {
-        copy_cut_border_image_int16(bottom_tensor, top_tensor, config.h_offset, config.w_offset, config.c_offset);
+        copy_cut_border_image_int8(bottom_tensor, top_tensor, config.h_offset, config.w_offset, config.c_offset);
         return CNET_STATUS_SUCCESS;
     }
 

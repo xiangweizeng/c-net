@@ -21,7 +21,7 @@ FUNCTION_IRAM static int sigmoid_forward(
     tensor_t *top_tensor = &top_tensors->data[0].data;
     const blob_info_t *bottom_blob_info = bottom_tensors->data[0].blob;
 
-    quantize16_tensor_parallize(
+    quantize_tensor(
             bottom_tensor,
             top_tensor,
             bottom_blob_info->scale,

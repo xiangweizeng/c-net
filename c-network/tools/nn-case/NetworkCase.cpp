@@ -13,7 +13,7 @@
 int main(int argc, char** argv) {
     if (argc < 6) {
         fprintf(stderr, "usage: %s [in_param] [in_bin] [out_hpp] [out_cpp] [table_path]"
-                        "\n [quantize_type 1=int8 other=int16] [per_channels_quantize 1=true, other=false]\n",
+                        "\n [quantize_type 1=int16 other=int8] [per_channels_quantize 1=true, other=false]\n",
                 argv[0]);
         return -1;
     }
@@ -23,12 +23,12 @@ int main(int argc, char** argv) {
     const char* out_hpp = argv[3];
     const char* out_cpp = argv[4];
     const char* table_path = argv[5];
-    data_type_t data_type = int16_data_type;
+    data_type_t data_type = int8_data_type;
     bool per_channels_quantize = false;
 
     if(argc >= 7){
         if(atoi(argv[6]) == 1){
-            data_type = int8_data_type;
+            data_type = int16_data_type;
         }
     }
 

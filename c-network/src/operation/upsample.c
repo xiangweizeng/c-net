@@ -57,8 +57,8 @@ FUNCTION_IRAM static void resize_bilinear_image(
     tensor_create_1d(&rowsbuf0, w, 2u, option_get_instance().workspace);
     tensor_t rowsbuf1 = tensor_create_default();
     tensor_create_1d(&rowsbuf1, w, 2u, option_get_instance().workspace);
-    int16_t *rows0 = rowsbuf0.data;
-    int16_t *rows1 = rowsbuf1.data;
+    int8_t *rows0 = rowsbuf0.data;
+    int8_t *rows1 = rowsbuf1.data;
 
     int prev_sy1 = -2;
 
@@ -69,16 +69,16 @@ FUNCTION_IRAM static void resize_bilinear_image(
             // reuse all rows
         } else if (sy == prev_sy1 + 1) {
             // hresize one row
-            int16_t *rows0_old = rows0;
+            int8_t *rows0_old = rows0;
             rows0 = rows1;
             rows1 = rows0_old;
-            const int16_t *S1 = (const int16_t *) src->data + src->d0 * (sy + 1);
+            const int8_t *S1 = (const int8_t *) src->data + src->d0 * (sy + 1);
 
             const float *alphap = alpha;
-            int16_t *rows1p = rows1;
+            int8_t *rows1p = rows1;
             for (int dx = 0; dx < w; dx++) {
                 int sx = xofs[dx];
-                const int16_t *S1p = S1 + sx;
+                const int8_t *S1p = S1 + sx;
 
                 float a0 = alphap[0];
                 float a1 = alphap[1];
@@ -88,16 +88,16 @@ FUNCTION_IRAM static void resize_bilinear_image(
             }
         } else {
             // hresize two rows
-            const int16_t *S0 = (const int16_t *) src->data + src->d0 * (sy);
-            const int16_t *S1 = (const int16_t *) src->data + src->d0 * (sy + 1);
+            const int8_t *S0 = (const int8_t *) src->data + src->d0 * (sy);
+            const int8_t *S1 = (const int8_t *) src->data + src->d0 * (sy + 1);
 
             const float *alphap = alpha;
-            int16_t *rows0p = rows0;
-            int16_t *rows1p = rows1;
+            int8_t *rows0p = rows0;
+            int8_t *rows1p = rows1;
             for (int dx = 0; dx < w; dx++) {
                 int sx = xofs[dx];
-                const int16_t *S0p = S0 + sx;
-                const int16_t *S1p = S1 + sx;
+                const int8_t *S0p = S0 + sx;
+                const int8_t *S1p = S1 + sx;
 
                 float a0 = alphap[0];
                 float a1 = alphap[1];
@@ -114,9 +114,9 @@ FUNCTION_IRAM static void resize_bilinear_image(
         float b0 = beta[0];
         float b1 = beta[1];
 
-        int16_t *rows0p = rows0;
-        int16_t *rows1p = rows1;
-        int16_t *Dp = (int16_t *) dst->data + dst->d0 * dy;
+        int8_t *rows0p = rows0;
+        int8_t *rows1p = rows1;
+        int8_t *Dp = (int8_t *) dst->data + dst->d0 * dy;
         for (int dx = 0; dx < w; dx++) {
 //             D[x] = rows0[x]*b0 + rows1[x]*b1;
             *Dp++ = *rows0p++ * b0 + *rows1p++ * b1;
@@ -200,10 +200,10 @@ resize_bicubic_image(const tensor_t *src, tensor_t *dst, float *alpha, int *xofs
     tensor_create_1d(&rowsbuf1, w, 2u, option_get_instance().workspace);
     tensor_t rowsbuf3 = tensor_create_default();
     tensor_create_1d(&rowsbuf1, w, 2u, option_get_instance().workspace);
-    int16_t *rows0 = rowsbuf0.data;
-    int16_t *rows1 = rowsbuf1.data;
-    int16_t *rows2 = rowsbuf2.data;
-    int16_t *rows3 = rowsbuf3.data;
+    int8_t *rows0 = rowsbuf0.data;
+    int8_t *rows1 = rowsbuf1.data;
+    int8_t *rows2 = rowsbuf2.data;
+    int8_t *rows3 = rowsbuf3.data;
 
     int prev_sy1 = -3;
 
@@ -214,18 +214,18 @@ resize_bicubic_image(const tensor_t *src, tensor_t *dst, float *alpha, int *xofs
             // reuse all rows
         } else if (sy == prev_sy1 + 1) {
             // hresize one row
-            int16_t *rows0_old = rows0;
+            int8_t *rows0_old = rows0;
             rows0 = rows1;
             rows1 = rows2;
             rows2 = rows3;
             rows3 = rows0_old;
-            const int16_t *S3 = (const int16_t *) src->data + src->d0 * (sy + 2);
+            const int8_t *S3 = (const int8_t *) src->data + src->d0 * (sy + 2);
 
             const float *alphap = alpha;
-            int16_t *rows3p = rows3;
+            int8_t *rows3p = rows3;
             for (int dx = 0; dx < w; dx++) {
                 int sx = xofs[dx];
-                const int16_t *S3p = S3 + sx;
+                const int8_t *S3p = S3 + sx;
 
                 float a0 = alphap[0];
                 float a1 = alphap[1];
@@ -237,22 +237,22 @@ resize_bicubic_image(const tensor_t *src, tensor_t *dst, float *alpha, int *xofs
             }
         } else if (sy == prev_sy1 + 2) {
             // hresize two rows
-            int16_t *rows0_old = rows0;
-            int16_t *rows1_old = rows1;
+            int8_t *rows0_old = rows0;
+            int8_t *rows1_old = rows1;
             rows0 = rows2;
             rows1 = rows3;
             rows2 = rows0_old;
             rows3 = rows1_old;
-            const int16_t *S2 = (const int16_t *) src->data + src->d0 * (sy + 1);
-            const int16_t *S3 = (const int16_t *) src->data + src->d0 * (sy + 2);
+            const int8_t *S2 = (const int8_t *) src->data + src->d0 * (sy + 1);
+            const int8_t *S3 = (const int8_t *) src->data + src->d0 * (sy + 2);
 
             const float *alphap = alpha;
-            int16_t *rows2p = rows2;
-            int16_t *rows3p = rows3;
+            int8_t *rows2p = rows2;
+            int8_t *rows3p = rows3;
             for (int dx = 0; dx < w; dx++) {
                 int sx = xofs[dx];
-                const int16_t *S2p = S2 + sx;
-                const int16_t *S3p = S3 + sx;
+                const int8_t *S2p = S2 + sx;
+                const int8_t *S3p = S3 + sx;
 
                 float a0 = alphap[0];
                 float a1 = alphap[1];
@@ -265,26 +265,26 @@ resize_bicubic_image(const tensor_t *src, tensor_t *dst, float *alpha, int *xofs
             }
         } else if (sy == prev_sy1 + 3) {
             // hresize three rows
-            int16_t *rows0_old = rows0;
-            int16_t *rows1_old = rows1;
-            int16_t *rows2_old = rows2;
+            int8_t *rows0_old = rows0;
+            int8_t *rows1_old = rows1;
+            int8_t *rows2_old = rows2;
             rows0 = rows3;
             rows1 = rows0_old;
             rows2 = rows1_old;
             rows3 = rows2_old;
-            const int16_t *S1 = (const int16_t *) src->data + src->d0 * (sy);
-            const int16_t *S2 = (const int16_t *) src->data + src->d0 * (sy + 1);
-            const int16_t *S3 = (const int16_t *) src->data + src->d0 * (sy + 2);
+            const int8_t *S1 = (const int8_t *) src->data + src->d0 * (sy);
+            const int8_t *S2 = (const int8_t *) src->data + src->d0 * (sy + 1);
+            const int8_t *S3 = (const int8_t *) src->data + src->d0 * (sy + 2);
 
             const float *alphap = alpha;
-            int16_t *rows1p = rows1;
-            int16_t *rows2p = rows2;
-            int16_t *rows3p = rows3;
+            int8_t *rows1p = rows1;
+            int8_t *rows2p = rows2;
+            int8_t *rows3p = rows3;
             for (int dx = 0; dx < w; dx++) {
                 int sx = xofs[dx];
-                const int16_t *S1p = S1 + sx;
-                const int16_t *S2p = S2 + sx;
-                const int16_t *S3p = S3 + sx;
+                const int8_t *S1p = S1 + sx;
+                const int8_t *S2p = S2 + sx;
+                const int8_t *S3p = S3 + sx;
 
                 float a0 = alphap[0];
                 float a1 = alphap[1];
@@ -298,22 +298,22 @@ resize_bicubic_image(const tensor_t *src, tensor_t *dst, float *alpha, int *xofs
             }
         } else {
             // hresize four rows
-            const int16_t *S0 = (const int16_t *) src->data + src->d0 * (sy - 1);
-            const int16_t *S1 = (const int16_t *) src->data + src->d0 * (sy);
-            const int16_t *S2 = (const int16_t *) src->data + src->d0 * (sy + 1);
-            const int16_t *S3 = (const int16_t *) src->data + src->d0 * (sy + 2);
+            const int8_t *S0 = (const int8_t *) src->data + src->d0 * (sy - 1);
+            const int8_t *S1 = (const int8_t *) src->data + src->d0 * (sy);
+            const int8_t *S2 = (const int8_t *) src->data + src->d0 * (sy + 1);
+            const int8_t *S3 = (const int8_t *) src->data + src->d0 * (sy + 2);
 
             const float *alphap = alpha;
-            int16_t *rows0p = rows0;
-            int16_t *rows1p = rows1;
-            int16_t *rows2p = rows2;
-            int16_t *rows3p = rows3;
+            int8_t *rows0p = rows0;
+            int8_t *rows1p = rows1;
+            int8_t *rows2p = rows2;
+            int8_t *rows3p = rows3;
             for (int dx = 0; dx < w; dx++) {
                 int sx = xofs[dx];
-                const int16_t *S0p = S0 + sx;
-                const int16_t *S1p = S1 + sx;
-                const int16_t *S2p = S2 + sx;
-                const int16_t *S3p = S3 + sx;
+                const int8_t *S0p = S0 + sx;
+                const int8_t *S1p = S1 + sx;
+                const int8_t *S2p = S2 + sx;
+                const int8_t *S3p = S3 + sx;
 
                 float a0 = alphap[0];
                 float a1 = alphap[1];
@@ -336,11 +336,11 @@ resize_bicubic_image(const tensor_t *src, tensor_t *dst, float *alpha, int *xofs
         float b2 = beta[2];
         float b3 = beta[3];
 
-        int16_t *rows0p = rows0;
-        int16_t *rows1p = rows1;
-        int16_t *rows2p = rows2;
-        int16_t *rows3p = rows3;
-        int16_t *Dp = (int16_t *) dst->data + dst->d0 * dy;
+        int8_t *rows0p = rows0;
+        int8_t *rows1p = rows1;
+        int8_t *rows2p = rows2;
+        int8_t *rows3p = rows3;
+        int8_t *Dp = (int8_t *) dst->data + dst->d0 * dy;
         for (int dx = 0; dx < w; dx++) {
 //             D[x] = rows0[x]*b0 + rows1[x]*b1 + rows2[x]*b2 + rows3[x]*b3;
             *Dp++ = *rows0p++ * b0 + *rows1p++ * b1 + *rows2p++ * b2 + *rows3p++ * b3;
@@ -360,8 +360,8 @@ typedef struct interp_nearest_context_t {
     int h;
     int w;
     int ow;
-    int16_t *ptr;
-    int16_t *output_ptr;
+    int8_t *ptr;
+    int8_t *output_ptr;
 } interp_nearest_context_t;
 
 FUNCTION_IRAM void interp_nearest_thread(interp_nearest_context_t *context, int y) {
@@ -490,8 +490,8 @@ static int upsample_forward_impl(
     if (interp->config.upsample_type == 1)// nearest
     {
         for (int q = 0; q < c; ++q) {
-            int16_t *ptr = (int16_t *) tensor_d2(bottom_tensor, q).data;
-            int16_t *output_ptr = tensor_d2(top_tensor, q).data;
+            int8_t *ptr = (int8_t *) tensor_d2(bottom_tensor, q).data;
+            int8_t *output_ptr = tensor_d2(top_tensor, q).data;
 
             interp_nearest_context_t context = {
                     &interp->config,

@@ -39,8 +39,8 @@ FUNCTION_IRAM static int slice_forward(
 
             tensor_t *top_tensor = &top_tensors->data[i].data;
 
-            const int16_t* ptr = (const int16_t*)bottom_tensor + q;
-            int16_t* out_ptr = (int16_t*)top_tensor->data;
+            const int8_t* ptr = (const int8_t*)bottom_tensor + q;
+            int8_t* out_ptr = (int8_t*)top_tensor->data;
             memcpy(out_ptr, ptr, slices * elem_size);
 
             q += slices;
@@ -65,8 +65,8 @@ FUNCTION_IRAM static int slice_forward(
 
             int size = w * slices;
             tensor_t *top_tensor = &top_tensors->data[i].data;
-            const int16_t* ptr = (int16_t*)bottom_tensor->data + bottom_tensor->d0*q;
-            int16_t* out_ptr = (int16_t*)top_tensor->data;
+            const int8_t* ptr = (int8_t*)bottom_tensor->data + bottom_tensor->d0*q;
+            int8_t* out_ptr = (int8_t*)top_tensor->data;
             memcpy(out_ptr, ptr, size * elem_size);
 
             q += slices;
@@ -92,8 +92,8 @@ FUNCTION_IRAM static int slice_forward(
             tensor_t *top_tensor = &top_tensors->data[i].data;
             for (int j=0; j<h; j++)
             {
-                int16_t* out_ptr = (int16_t*)top_tensor->data + top_tensor->d0 * j;
-                const int16_t* ptr = (int16_t*)bottom_tensor->data + bottom_tensor->d0 *j + q;
+                int8_t* out_ptr = (int8_t*)top_tensor->data + top_tensor->d0 * j;
+                const int8_t* ptr = (int8_t*)bottom_tensor->data + bottom_tensor->d0 *j + q;
                 memcpy(out_ptr, ptr, slices * elem_size);
             }
 
@@ -119,8 +119,8 @@ FUNCTION_IRAM static int slice_forward(
             int size = bottom_tensor->step * slices;
             tensor_t *top_tensor = &top_tensors->data[i].data;
 
-            const int16_t* ptr = (int16_t*)tensor_d2(bottom_tensor, q).data;
-            int16_t* out_ptr = (int16_t*)top_tensor->data;
+            const int8_t* ptr = (int8_t*)tensor_d2(bottom_tensor, q).data;
+            int8_t* out_ptr = (int8_t*)top_tensor->data;
             memcpy(out_ptr, ptr, size * elem_size);
 
             q += slices;
@@ -148,9 +148,9 @@ FUNCTION_IRAM static int slice_forward(
             for (int p=0; p<channels; p++)
             {
                 int size = w * slices;
-                int16_t* out_ptr = (int16_t*)tensor_d2(top_tensor, p).data;
+                int8_t* out_ptr = (int8_t*)tensor_d2(top_tensor, p).data;
                 tensor_t m = tensor_d2(bottom_tensor, p);
-                const int16_t* ptr = (int16_t*)m.data + m.d0*q;
+                const int8_t* ptr = (int8_t*)m.data + m.d0*q;
                 memcpy(out_ptr, ptr, size * elem_size);
             }
 
@@ -178,12 +178,12 @@ FUNCTION_IRAM static int slice_forward(
             tensor_t *top_tensor = &top_tensors->data[i].data;
             for (int p=0; p<channels; p++)
             {
-                int16_t* out_ptr = (int16_t*)tensor_d2(top_tensor, p).data;
+                int8_t* out_ptr = (int8_t*)tensor_d2(top_tensor, p).data;
                 tensor_t m = tensor_d2(bottom_tensor, p);
 
                 for (int j=0; j<h; j++)
                 {
-                    const int16_t* ptr = (int16_t*)m.data + m.d0*j + q;
+                    const int8_t* ptr = (int8_t*)m.data + m.d0*j + q;
                     memcpy(out_ptr, ptr, slices * elem_size);
 
                     out_ptr += slices;

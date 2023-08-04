@@ -27,7 +27,7 @@ FUNCTION_IRAM static int softmax_forward(
     softmax_config_t config = softmax->config;
     const int * out_shape = top_tensors->data[0].blob->shape;
 
-    quantize16_tensor_parallize(
+    quantize_tensor(
             bottom_tensor,
             top_tensor,
             bottom_tensors->data[0].blob->scale,

@@ -24,8 +24,8 @@ FUNCTION_IRAM static int permute_forward(
     const int * in_shape = bottom_tensors->data[0].blob->shape;
     const int* out_shape = top_tensors->data[0].blob->shape;
 
-    int16_t* input = (int16_t*)bottom_tensor->data;
-    int16_t* output = (int16_t*)top_tensor->data;
+    int8_t* input = (int8_t*)bottom_tensor->data;
+    int8_t* output = (int8_t*)top_tensor->data;
 
     blob_shape_t i, o;
     for (o[3] = 0; o[3] < out_shape[3]; o[3]++) {
