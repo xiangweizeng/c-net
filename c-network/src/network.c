@@ -141,15 +141,15 @@ void session_set_input(session_t* context, int blob_index, tensor_t input) {
     }
 
     tensor_release(&context->blob_data[blob_index].data);
-    if(input.data_type != TENSOR_DATA_INT16){
+    if(input.data_type != TENSOR_DATA_INT8){
         blob_info_t output_blob = context->network->blobs[blob_index];
         int* out_shape = output_blob.shape;
 
         tensor_t quantize = tensor_create_default();
-        tensor_create_3d(&quantize, out_shape[3], out_shape[2], out_shape[1], 2u, context->option.tensor);
-        tensor_set_data_type(&quantize, TENSOR_DATA_INT16);
+        tensor_create_3d(&quantize, out_shape[3], out_shape[2], out_shape[1], 1u, context->option.tensor);
+        tensor_set_data_type(&quantize, TENSOR_DATA_INT8);
 
-        quantize16_tensor_parallize(&input, &quantize, output_blob.scale, &context->option);
+        quantize_tensor(&input, &quantize, output_blob.scale, &context->option);
         context->blob_data[blob_index].data = quantize;
     }else{
 
@@ -172,7 +172,7 @@ tensor_t session_get_output(session_t* context, int blob_index) {
         tensor_create_3d(&output, out_shape[3], out_shape[2], out_shape[1], 4u, context->option.tensor);
         tensor_set_data_type(&output, TENSOR_DATA_FLOAT);
 
-        quantize16_tensor_parallize(&context->blob_data[blob_index].data, &output, output_blob.scale, &context->option);
+        quantize_tensor(&context->blob_data[blob_index].data, &output, output_blob.scale, &context->option);
         tensor_release(&context->blob_data[blob_index].data);
         context->blob_data[blob_index].data = output;
     }

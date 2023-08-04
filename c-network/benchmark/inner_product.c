@@ -8,7 +8,7 @@
 
 #include <allocator.h>
 #include <stdint.h>
-#include <quantize16.h>
+#include <quantize_s8.h>
 #include "inner_product.h"
 
 #undef Min
@@ -55,6 +55,6 @@ FUNCTION_IRAM void inner_product(inner_product_context_t *context){
         w += remain;
         sum0 = REQUANTIZE_BIAS(sum0, requantize, b0);
         sum0 = sum0 > 0 ? sum0 : MULTIPLY_FIDED(sum0, leaky);
-        out_ptr[q] = CLIP_INT16(sum0, out_max, out_min);
+        out_ptr[q] = CLIP_INT8(sum0, out_max, out_min);
     }
 }

@@ -26,7 +26,7 @@ FUNCTION_IRAM static int prelu_forward(
 
     if(prelu->config.num_slope == 1){
         size_t total = group * group_size;
-        int16_t *ptr = top->data.data;
+        int8_t *ptr = top->data.data;
         float slope = slope_data[0];
 
         fixed_mul_t slope_fixed = get_fixed_mul(slope);
@@ -35,10 +35,10 @@ FUNCTION_IRAM static int prelu_forward(
         for (int j = 0; j < total; j++) {
             int32_t v = ptr[j];
             v = v < 0 ? MULTIPLY_FIDED(v, slope_fixed) : MULTIPLY_FIDED(v, requantize);
-            ptr[j] = CLIP_INT16(v, INT16_MAX, INT16_MIN);
+            ptr[j] = CLIP_INT8(v, INT8_MAX, INT8_MIN);
         }
     }else{
-        int16_t *ptr = top->data.data;
+        int8_t *ptr = top->data.data;
         fixed_mul_t requantize = get_fixed_mul(prelu->config.requantize);
         for(int s = 0; s < group; s ++){
             for(int j = 0; j < group_size; j++){
@@ -47,7 +47,7 @@ FUNCTION_IRAM static int prelu_forward(
 
                 int32_t v = ptr[j];
                 v = v < 0 ? MULTIPLY_FIDED(v, slope_fixed) : MULTIPLY_FIDED(v, requantize);
-                ptr[j] = CLIP_INT16(v, INT16_MAX, INT16_MIN);
+                ptr[j] = CLIP_INT8(v, INT8_MAX, INT8_MIN);
             }
             ptr += group_size;
         }

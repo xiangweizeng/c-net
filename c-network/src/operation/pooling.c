@@ -21,8 +21,8 @@ FUNCTION_IRAM static int global_pooling_forward(pooling_t *pooling, tensor_t *bo
     int input_w = bottom_tensor->d1;
     int input_h = bottom_tensor->d2;
 
-    int16_t *output = top_tensor->data;
-    int16_t *input = bottom_tensor->data;
+    int8_t *output = top_tensor->data;
+    int8_t *input = bottom_tensor->data;
 
     if (pooling->config.pooling_type == pool_method_max_type) {
         for(int c = 0; c < channels; c++){
@@ -66,8 +66,8 @@ typedef struct normal_pooling_context_t{
 }normal_pooling_context_t;
 
 FUNCTION_IRAM static void normal_pool_max(normal_pooling_context_t *context) {
-    int16_t *out_ptr = (int16_t *)context->top_tensor->data;
-    const int16_t *in_ptr = (const int16_t *) context->bottom_tensor->data;
+    int8_t *out_ptr = (int8_t *)context->top_tensor->data;
+    const int8_t *in_ptr = (const int8_t *) context->bottom_tensor->data;
 
     int input_w = context->bottom_tensor->d1;
     int input_h = context->bottom_tensor->d2;
@@ -84,9 +84,9 @@ FUNCTION_IRAM static void normal_pool_max(normal_pooling_context_t *context) {
             const int32_t filter_x_start = Max(0, -in_x_origin );
             const int32_t filter_x_end = Min(context->config.kernel_w, input_w - in_x_origin );
 
-            int16_t *points_output = out_ptr + ( oy * context->out_w + ox) * channels;
+            int8_t *points_output = out_ptr + ( oy * context->out_w + ox) * channels;
             for(int32_t oc = 0; oc < channels; oc ++){
-                int16_t value = INT16_MIN;
+                int8_t value = INT8_MIN;
                 for (int32_t ky = filter_y_start; ky < filter_y_end; ky++)
                 {
                     for (int32_t kx = filter_x_start; kx < filter_x_end; kx++)
@@ -95,7 +95,7 @@ FUNCTION_IRAM static void normal_pool_max(normal_pooling_context_t *context) {
                         const int32_t in_x = in_x_origin + kx;
                         const int points_input = (in_y * input_w + in_x) * channels;
 
-                        const int16_t in_v = in_ptr[points_input + oc];
+                        const int8_t in_v = in_ptr[points_input + oc];
                         value = Max(value, in_v);
                     }
                 }
@@ -106,8 +106,8 @@ FUNCTION_IRAM static void normal_pool_max(normal_pooling_context_t *context) {
 }
 
 FUNCTION_IRAM static void normal_pool_ave(normal_pooling_context_t *context) {
-    int16_t *out_ptr = (int16_t *)context->top_tensor->data;
-    const int16_t *in_ptr = (const int16_t *) context->bottom_tensor->data;
+    int8_t *out_ptr = (int8_t *)context->top_tensor->data;
+    const int8_t *in_ptr = (const int8_t *) context->bottom_tensor->data;
 
     int input_w = context->bottom_tensor->d1;
     int input_h = context->bottom_tensor->d2;
@@ -125,7 +125,7 @@ FUNCTION_IRAM static void normal_pool_ave(normal_pooling_context_t *context) {
             const int32_t filter_x_start = Max(0, -in_x_origin );
             const int32_t filter_x_end = Min(context->config.kernel_w, input_w - in_x_origin );
 
-            int16_t *points_output = out_ptr + ( oy * context->out_w + ox) * channels;
+            int8_t *points_output = out_ptr + ( oy * context->out_w + ox) * channels;
             for(int32_t oc = 0; oc < channels; oc ++) {
 
                 int32_t value = 0;
@@ -139,7 +139,7 @@ FUNCTION_IRAM static void normal_pool_ave(normal_pooling_context_t *context) {
                         const int points_input = (in_y * input_w + in_x) * channels;
 
                         kernel_count ++;
-                        const int16_t in_v = in_ptr[points_input + oc];
+                        const int8_t in_v = in_ptr[points_input + oc];
                         value += in_v;
                     }
                 }

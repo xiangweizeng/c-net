@@ -12,7 +12,7 @@
 #ifndef CNET_LAYER_CONFIG_H
 #define CNET_LAYER_CONFIG_H
 
-#include "quantize16.h"
+#include "quantize_s8.h"
 
 
 /// operation type

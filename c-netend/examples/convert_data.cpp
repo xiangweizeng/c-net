@@ -11,7 +11,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <cstdio>
 
-static inline int16_t float2int16(float v) {
+static inline int16_t float2int8(float v) {
     int int32 = round(v);
     if (int32 > 32767) return 32767;
     if (int32 < -32768) return -32768;
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
         size_t size = channel.total();
         float* data = channel;
         for (int i = 0; i < size; i++) {
-            fprintf(cpp, "%d,", float2int16(data[i]));
+            fprintf(cpp, "%d,", float2int8(data[i]));
 
             if ((count + 1) % 32 == 0) {
                 fprintf(cpp, "\n");

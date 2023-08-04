@@ -18,8 +18,8 @@ BENCHMARKS(inner_product){
                                 .bias_term = 1,
                                 .requantize = {1, 1},
                                 .leaky = {0, 0},
-                                .max = INT16_MAX,
-                                .min = INT16_MIN
+                                .max = INT8_MAX,
+                                .min = INT8_MIN
                         }
                 }
         },
@@ -31,8 +31,8 @@ BENCHMARKS(inner_product){
                                 .bias_term = 1,
                                 .requantize = {1, 1},
                                 .leaky = {0, 0},
-                                .max = INT16_MAX,
-                                .min = INT16_MIN
+                                .max = INT8_MAX,
+                                .min = INT8_MIN
                         }
                 }
         },
@@ -44,8 +44,8 @@ BENCHMARKS(inner_product){
                                 .bias_term = 1,
                                 .requantize = {1, 1},
                                 .leaky = {0, 0},
-                                .max = INT16_MAX,
-                                .min = INT16_MIN
+                                .max = INT8_MAX,
+                                .min = INT8_MIN
                         }
                 }
         },
@@ -57,8 +57,8 @@ BENCHMARKS(inner_product){
                                 .bias_term = 1,
                                 .requantize = {1, 1},
                                 .leaky = {0, 0},
-                                .max = INT16_MAX,
-                                .min = INT16_MIN
+                                .max = INT8_MAX,
+                                .min = INT8_MIN
                         }
                 }
         },
@@ -70,8 +70,8 @@ BENCHMARKS(inner_product){
                                 .bias_term = 1,
                                 .requantize = {1, 1},
                                 .leaky = {0, 0},
-                                .max = INT16_MAX,
-                                .min = INT16_MIN
+                                .max = INT8_MAX,
+                                .min = INT8_MIN
                         }
                 }
         },

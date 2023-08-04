@@ -27,7 +27,7 @@ bool PaddingCase::get_layer_define(std::string &layer_define) {
     std::string output = get_blob_output_name(0);
     float output_scale = case_blobs[output].scale;
 
-    int pad_value = float2int16(output_scale * pd->value);
+    int pad_value = float2int8(output_scale * pd->value);
     char buffer[1024] = {0};
     sprintf(buffer, "DEFINE_PADDING_LAYER(%s, %d, %d, %d, %d, %d, %d);\n", pd->name.c_str(),
             pd->type, pd->left, pd->right, pd->top, pd->bottom, pad_value);

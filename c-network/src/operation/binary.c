@@ -44,97 +44,97 @@ FUNCTION_IRAM static inline int get_input_index_offset(tensor_shape_t shape, int
     return TENSOR_SHAPE_OFFSET(shape.shape, offset);
 }
 
-typedef struct binary_int16_run_context_t {
+typedef struct binary_int8_run_context_t {
     float scale_a;
     float scale_b;
     float scale_c;
-} binary_int16_run_context_t;
+} binary_int8_run_context_t;
 
-typedef void (*operation_int16_run)(
-        const binary_int16_run_context_t *context,
-        const int16_t *,
-        const int16_t *,
-        int16_t *);
+typedef void (*operation_int8_run)(
+        const binary_int8_run_context_t *context,
+        const int8_t *,
+        const int8_t *,
+        int8_t *);
 
-#define OPERATION_INT16_FUN(opname, op)                     \
-    FUNCTION_IRAM static void operator_int16__##opname(     \
-        const binary_int16_run_context_t *context,          \
-        const int16_t* x,                                   \
-        const int16_t* y,                                   \
-        int16_t* out)                                       \
+#define OPERATION_INT8_FUN(opname, op)                     \
+    FUNCTION_IRAM static void operator_int8__##opname(     \
+        const binary_int8_run_context_t *context,          \
+        const int8_t* x,                                   \
+        const int8_t* y,                                   \
+        int8_t* out)                                       \
     {                                                       \
         float a = (float)*(x) / context->scale_a;           \
         float b = (float)*(y) / context->scale_b;           \
-        *out = float2int16(context->scale_c*(op(a, b)));    \
+        *out = float2int8(context->scale_c*(op(a, b)));    \
     }
 
-#define OPERATION_INT16_FUN_POINTER(opname)  operator_int16__##opname
+#define OPERATION_INT8_FUN_POINTER(opname)  operator_int8__##opname
 
-OPERATION_INT16_FUN(add, ADD)
+OPERATION_INT8_FUN(add, ADD)
 
-OPERATION_INT16_FUN(sub, SUB)
+OPERATION_INT8_FUN(sub, SUB)
 
-OPERATION_INT16_FUN(mul, MUL)
+OPERATION_INT8_FUN(mul, MUL)
 
-OPERATION_INT16_FUN(div, DIV)
+OPERATION_INT8_FUN(div, DIV)
 
-OPERATION_INT16_FUN(max, MAX)
+OPERATION_INT8_FUN(max, MAX)
 
-OPERATION_INT16_FUN(min, MIN)
+OPERATION_INT8_FUN(min, MIN)
 
-OPERATION_INT16_FUN(pow, POW)
+OPERATION_INT8_FUN(pow, POW)
 
-OPERATION_INT16_FUN(rsub, RSUB)
+OPERATION_INT8_FUN(rsub, RSUB)
 
-OPERATION_INT16_FUN(rdiv, RDIV)
+OPERATION_INT8_FUN(rdiv, RDIV)
 
-OPERATION_INT16_FUN(rpow, RPOW)
+OPERATION_INT8_FUN(rpow, RPOW)
 
-OPERATION_INT16_FUN(atan2, ATAN2)
+OPERATION_INT8_FUN(atan2, ATAN2)
 
-OPERATION_INT16_FUN(ratan2, RATAN2)
+OPERATION_INT8_FUN(ratan2, RATAN2)
 
-static operation_int16_run int16_operations[] = {
-        OPERATION_INT16_FUN_POINTER(add),
-        OPERATION_INT16_FUN_POINTER(sub),
-        OPERATION_INT16_FUN_POINTER(mul),
-        OPERATION_INT16_FUN_POINTER(div),
-        OPERATION_INT16_FUN_POINTER(max),
-        OPERATION_INT16_FUN_POINTER(min),
-        OPERATION_INT16_FUN_POINTER(pow),
-        OPERATION_INT16_FUN_POINTER(rsub),
-        OPERATION_INT16_FUN_POINTER(rdiv),
-        OPERATION_INT16_FUN_POINTER(rpow),
-        OPERATION_INT16_FUN_POINTER(atan2),
-        OPERATION_INT16_FUN_POINTER(ratan2),
+static operation_int8_run int8_operations[] = {
+        OPERATION_INT8_FUN_POINTER(add),
+        OPERATION_INT8_FUN_POINTER(sub),
+        OPERATION_INT8_FUN_POINTER(mul),
+        OPERATION_INT8_FUN_POINTER(div),
+        OPERATION_INT8_FUN_POINTER(max),
+        OPERATION_INT8_FUN_POINTER(min),
+        OPERATION_INT8_FUN_POINTER(pow),
+        OPERATION_INT8_FUN_POINTER(rsub),
+        OPERATION_INT8_FUN_POINTER(rdiv),
+        OPERATION_INT8_FUN_POINTER(rpow),
+        OPERATION_INT8_FUN_POINTER(atan2),
+        OPERATION_INT8_FUN_POINTER(ratan2),
 };
 
-typedef struct binary_int16_context_t {
-    const int16_t *a;
-    const int16_t *b;
-    int16_t *c;
-    operation_int16_run op;
-    binary_int16_run_context_t* run_context;
-} binary_int16_context_t;
+typedef struct binary_int8_context_t {
+    const int8_t *a;
+    const int8_t *b;
+    int8_t *c;
+    operation_int8_run op;
+    binary_int8_run_context_t* run_context;
+} binary_int8_context_t;
 
-FUNCTION_IRAM static void binary_int16_equals_shape_thread(
-        binary_int16_context_t *context,
+FUNCTION_IRAM static void binary_int8_equals_shape_thread(
+        binary_int8_context_t *context,
         size_t start,
         size_t tile) {
-    const int16_t *ptr = context->a + start;
-    const int16_t *ptr1 = context->b + start;
-    int16_t *out_ptr = context->c + start;
+    const int8_t *ptr = context->a + start;
+    const int8_t *ptr1 = context->b + start;
+    int8_t *out_ptr = context->c + start;
     for (int i = 0; i < tile; i++) {
         context->op(context->run_context, &ptr[i], &ptr1[i], &out_ptr[i]);
     }
 }
 
-FUNCTION_IRAM int binary_op_run_int16(
+FUNCTION_IRAM int binary_op_run_int8(
         tensor_t *a,
         tensor_t *b,
         tensor_t *c,
-        operation_int16_run op,
-        binary_int16_run_context_t *run_context,
+        operation_int8_run op,
+        binary_int8_run_context_t *run_context,
         option_t *opt) {
 
     tensor_shape_t a_shape = tensor_get_shape(a);
@@ -148,15 +148,15 @@ FUNCTION_IRAM int binary_op_run_int16(
         size_t group_size = size / thread_number;
         group_size = group_size > 0 ? group_size : size;
 
-        binary_int16_context_t context = {a->data, b->data, c->data, op, run_context};
-        PARALLELIZE_1D_TILE_1D(binary_int16_equals_shape_thread, context, size, group_size);
+        binary_int8_context_t context = {a->data, b->data, c->data, op, run_context};
+        PARALLELIZE_1D_TILE_1D(binary_int8_equals_shape_thread, context, size, group_size);
 
         return CNET_STATUS_SUCCESS;
     } else {
         tensor_shape_t out_shape = binary_get_output_shape(a_shape, b_shape);
-        const int16_t *a_data = a->data;
-        const int16_t *b_data = b->data;
-        int16_t *c_data = c->data;
+        const int8_t *a_data = a->data;
+        const int8_t *b_data = b->data;
+        int8_t *c_data = c->data;
 
         for (int d0 = 0; d0 < out_shape.shape[0]; d0++) {
             for (int d1 = 0; d1 < out_shape.shape[1]; d1++) {
@@ -177,29 +177,29 @@ FUNCTION_IRAM int binary_op_run_int16(
     return CNET_STATUS_SUCCESS;
 }
 
-typedef struct binary_inplace_int16_t {
-    int16_t *a;
-    int16_t b;
-    operation_int16_run op;
-    binary_int16_run_context_t * run_context;
-} binary_inplace_int16_t;
+typedef struct binary_inplace_int8_t {
+    int8_t *a;
+    int8_t b;
+    operation_int8_run op;
+    binary_int8_run_context_t * run_context;
+} binary_inplace_int8_t;
 
-FUNCTION_IRAM static void binary_inplace_int16_thread(
-        binary_inplace_int16_t *context,
+FUNCTION_IRAM static void binary_inplace_int8_thread(
+        binary_inplace_int8_t *context,
         size_t start,
         size_t tile) {
 
-    int16_t *ptr = context->a + start;
+    int8_t *ptr = context->a + start;
     for (int i = 0; i < tile; i++) {
         context->op(context->run_context, &ptr[i], &context->b, &ptr[i]);
     }
 }
 
-FUNCTION_IRAM static int binary_op_scalar_inplace_int16(
+FUNCTION_IRAM static int binary_op_scalar_inplace_int8(
         tensor_t *a,
-        int16_t b,
-        operation_int16_run op,
-        binary_int16_run_context_t *run_context,
+        int8_t b,
+        operation_int8_run op,
+        binary_int8_run_context_t *run_context,
         option_t *opt) {
 
     int size = tensor_total(a);
@@ -208,8 +208,8 @@ FUNCTION_IRAM static int binary_op_scalar_inplace_int16(
     size_t group_size = size / thread_number;
     group_size = group_size > 0 ? group_size : size;
 
-    binary_inplace_int16_t context = {a->data, b, op, run_context};
-    PARALLELIZE_1D_TILE_1D(binary_inplace_int16_thread, context, size, group_size);
+    binary_inplace_int8_t context = {a->data, b, op, run_context};
+    PARALLELIZE_1D_TILE_1D(binary_inplace_int8_thread, context, size, group_size);
 
     return CNET_STATUS_SUCCESS;
 }
@@ -220,11 +220,11 @@ FUNCTION_IRAM static int binary_op_forward_inplace(
         blob_container_t *top,
         option_t *opt) {
 
-    operation_int16_run op = int16_operations[binary->config.binary_type];
+    operation_int8_run op = int8_operations[binary->config.binary_type];
     tensor_t *top_tensor = &top->data;
 
-    binary_int16_run_context_t run_context = {bottom->blob->scale, 1.f / binary->config.b, top->blob->scale};
-    return binary_op_scalar_inplace_int16(top_tensor, 1, op, &run_context, opt);
+    binary_int8_run_context_t run_context = {bottom->blob->scale, 1.f / binary->config.b, top->blob->scale};
+    return binary_op_scalar_inplace_int8(top_tensor, 1, op, &run_context, opt);
 }
 
 
@@ -238,14 +238,14 @@ FUNCTION_IRAM static int binary_op_forward_impl(
     blob_container_t *bottom1 = &bottom_tensors->data[1];
     blob_container_t *top = &top_tensors->data[0];
 
-    operation_int16_run op = int16_operations[binary->config.binary_type];
-    binary_int16_run_context_t run_context = {
+    operation_int8_run op = int8_operations[binary->config.binary_type];
+    binary_int8_run_context_t run_context = {
             bottom0->blob->scale,
             bottom1->blob->scale,
             top->blob->scale
     };
 
-    return binary_op_run_int16(&bottom0->data, &bottom1->data, &top->data, op, &run_context, opt);
+    return binary_op_run_int8(&bottom0->data, &bottom1->data, &top->data, op, &run_context, opt);
 }
 
 
@@ -273,7 +273,6 @@ FUNCTION_IRAM static int binary_setup(
     operation->support_inplace = binary->config.with_scalar;
     return CNET_STATUS_SUCCESS;
 }
-
 
 IMPL_OPERATION_CREATOR(binary) {
     operation_t *binary = (operation_t *)fast_malloc(sizeof(operation_t));

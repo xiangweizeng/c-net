@@ -24,14 +24,14 @@ FUNCTION_IRAM static int batch_norm_forward(
 
     int group =  top->blob->shape[1] * top->blob->shape[2];
     int group_size = top->blob->shape[3];
-    int16_t *ptr = top->data.data;
+    int8_t *ptr = top->data.data;
 
     for(int s = 0; s < group; s ++){
         for(int j = 0; j < group_size; j++){
             int32_t a = a_data[j];
             float b = b_data[j];
             float v = b * ptr[j] + a;
-            ptr[j] = float2int16(v);
+            ptr[j] = float2int8(v);
         }
         ptr += group_size;
     }

@@ -7,7 +7,7 @@
  *
  **/
 
-#include "quantize16.h"
+#include "quantize_s8.h"
 
 typedef struct quantize_input_context {
     void* input;
@@ -22,16 +22,16 @@ FUNCTION_IRAM static void quantize_input_thread(quantize_input_context_t* contex
 {
     if (context->src_type == TENSOR_DATA_FLOAT) {
         float* ptr = (float*)context->input + index;
-        int16_t* outptr = (int16_t*)context->output + index;
+        int8_t* outptr = (int8_t*)context->output + index;
 
         size_t i;
         for (i = 0; i < tile; i++) {
-            outptr[i] = float2int16(ptr[i] * context->scale);
+            outptr[i] = float2int8(ptr[i] * context->scale);
         }
     }
     else if (context->dest_type == TENSOR_DATA_FLOAT) {
         float* outptr = (float*)context->output + index;
-        int16_t* ptr = (int16_t*)context->input + index;
+        int8_t* ptr = (int8_t*)context->input + index;
 
         size_t i;
         for (i = 0; i < tile; i++) {
@@ -41,7 +41,7 @@ FUNCTION_IRAM static void quantize_input_thread(quantize_input_context_t* contex
 }
 
 
-void quantize16_tensor_parallize(tensor_t* bottom_tensor, tensor_t* top_tensor, float scale, option_t* opt)
+void quantize_tensor(tensor_t* bottom_tensor, tensor_t* top_tensor, float scale, option_t* opt)
 {
     size_t  size = tensor_total(bottom_tensor);
     int thread_number = opt->thread_number > 0 ? opt->thread_number : 1;

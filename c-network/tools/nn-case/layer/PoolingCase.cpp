@@ -85,7 +85,7 @@ bool PoolingCase::get_layer_define(std::string &layer_define) {
     int16_t pad_value = 0;
     if (pool->pooling_type == ncnn::Pooling::PoolMethod_MAX)
     {
-        pad_value = INT16_MIN;
+        pad_value = INT8_MIN;
     }
 
     std::vector<int> padding = get_pooling_runtime_padding(pool, inw, inh);

@@ -28,23 +28,23 @@
 #define REC(x) (1.f / (x))
 #define TANH(x) (tanh(x))
 
-typedef struct binary_int16_run_context_t {
+typedef struct binary_int8_run_context_t {
     float scale_a;
     float scale_b;
-} binary_int16_run_context_t;
+} binary_int8_run_context_t;
 
-typedef void (*operation_run)(const binary_int16_run_context_t *, int16_t *);
+typedef void (*operation_run)(const binary_int8_run_context_t *, int8_t *);
 
 #define OPERATION_FUN(opname, op)                           \
-    FUNCTION_IRAM static void operator_int16__##opname(     \
-        const binary_int16_run_context_t *context,          \
-        int16_t* x)                                         \
+    FUNCTION_IRAM static void operator_int8__##opname(     \
+        const binary_int8_run_context_t *context,          \
+        int8_t* x)                                         \
     {                                                       \
         float a = (float)*(x) / context->scale_a;           \
-        *(x) = float2int16(context->scale_b * (op(a)));         \
+        *(x) = float2int8(context->scale_b * (op(a)));         \
     }
 
-#define OPERATION_FUN_POINTER(opname) operator_int16__##opname
+#define OPERATION_FUN_POINTER(opname) operator_int8__##opname
 
 OPERATION_FUN(abs, ABS)
 
@@ -101,13 +101,13 @@ operation_run operation_table[] = {
 };
 
 typedef struct unary_op_context {
-    binary_int16_run_context_t *run_context;
+    binary_int8_run_context_t *run_context;
     void *data;
     operation_run op;
 } unary_op_context;
 
 FUNCTION_IRAM static void unary_op_thread_tile(unary_op_context *context, size_t index, size_t tile) {
-    int16_t *a = (int16_t *) context->data + index;
+    int8_t *a = (int8_t *) context->data + index;
     for (int i = 0; i < tile; i++) {
         context->op(context->run_context, a + i);
     }
@@ -115,7 +115,7 @@ FUNCTION_IRAM static void unary_op_thread_tile(unary_op_context *context, size_t
 
 FUNCTION_IRAM static int unary_op_inplace(
         tensor_t *a,
-        binary_int16_run_context_t *run_context,
+        binary_int8_run_context_t *run_context,
         operation_run op,
         option_t *opt) {
     size_t size = tensor_total(a);
@@ -143,7 +143,7 @@ FUNCTION_IRAM static int unary_op_forward_inplace(
     operation_run op = operation_table[unary->config.unary_type];
     tensor_t *top_tensor = &top->data;
 
-    binary_int16_run_context_t run_context = {
+    binary_int8_run_context_t run_context = {
             bottom->blob->scale,
             top->blob->scale
     };

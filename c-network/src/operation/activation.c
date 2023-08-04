@@ -13,12 +13,12 @@
 typedef struct bnll_context{
     float in_scale;
     float out_scale;
-    int16_t *output;
+    int8_t *output;
 }bnll_context_t;
 
 static void bnll_thread_tile(bnll_context_t *context, size_t index, size_t tile)
 {
-    int16_t *ptr = (int16_t *)context->output + index;
+    int8_t *ptr = (int8_t *)context->output + index;
     float in_scale = context->in_scale;
     float out_scale = context->out_scale;
     for (int i = 0; i < tile; i++) {
@@ -29,29 +29,29 @@ static void bnll_thread_tile(bnll_context_t *context, size_t index, size_t tile)
         else{
             x = log(1.f + exp(x));
         }
-        ptr[i] = float2int16(x * out_scale);
+        ptr[i] = float2int8(x * out_scale);
     }
 }
 
 typedef struct clip_context{
     fixed_mul_t requantize;
-    int16_t max;
-    int16_t min;
-    int16_t *output;
+    int8_t max;
+    int8_t min;
+    int8_t *output;
 }clip_context_t;
 
 static void clip_thread_tile(clip_context_t *context, size_t index, size_t tile)
 {
-    int16_t *ptr = (int16_t*)context->output + index;
+    int8_t *ptr = (int8_t*)context->output + index;
     fixed_mul_t fixed = context->requantize;
-    int16_t max = context->max;
-    int16_t min = context->max;
+    int8_t max = context->max;
+    int8_t min = context->max;
 
     for (int i = 0; i < tile; i++) {
         int32_t v = MULTIPLY_FIDED(ptr[i], fixed);
         v = v > max ? max : v;
         v = v < min ? min : v;
-        ptr[i] = CLIP_INT16(v, INT16_MAX, INT16_MIN);
+        ptr[i] = CLIP_INT8(v, INT8_MAX, INT8_MIN);
     }
 }
 
@@ -59,12 +59,12 @@ typedef struct elu_context{
     float in_scale;
     float out_scale;
     float alpha;
-    int16_t *output;
+    int8_t *output;
 }elu_context_t;
 
 static void elu_thread_tile(elu_context_t *context, size_t index, size_t tile)
 {
-    int16_t *ptr = (int16_t*)context->output + index;
+    int8_t *ptr = (int8_t*)context->output + index;
     float in_scale = context->in_scale;
     float out_scale = context->out_scale;
     float alpha = context->alpha;
@@ -73,7 +73,7 @@ static void elu_thread_tile(elu_context_t *context, size_t index, size_t tile)
         if (x < 0.f){
             x = alpha * (expf(x) - 1.f);
         }
-        ptr[i] = float2int16(x * out_scale);
+        ptr[i] = float2int8(x * out_scale);
     }
 }
 
@@ -83,12 +83,12 @@ typedef struct exp_thread_context_t{
     float value_base;
     float shift;
     float scale;
-    int16_t *output;
+    int8_t *output;
 }exp_thread_context_t;
 
 static void exp1_thread_tile(exp_thread_context_t *context, size_t index, size_t tile)
 {
-    int16_t *ptr = (int16_t*)context->output + index;
+    int8_t *ptr = (int8_t*)context->output + index;
     float in_scale = context->in_scale;
     float out_scale = context->out_scale;
     float scale = context->scale;
@@ -97,13 +97,13 @@ static void exp1_thread_tile(exp_thread_context_t *context, size_t index, size_t
     for (int i = 0; i < tile; i++) {
         float x = ptr[i] / in_scale;
         x = exp(shift + x * scale);
-        ptr[i] = float2int16(x * out_scale);
+        ptr[i] = float2int8(x * out_scale);
     }
 }
 
 static void exp2_thread_tile(exp_thread_context_t *context, size_t index, size_t tile)
 {
-    int16_t *ptr = (int16_t*)context->output + index;
+    int8_t *ptr = (int8_t*)context->output + index;
     float in_scale = context->in_scale;
     float out_scale = context->out_scale;
     float shift = context->shift;
@@ -113,7 +113,7 @@ static void exp2_thread_tile(exp_thread_context_t *context, size_t index, size_t
     for (int i = 0; i < tile; i++) {
         float x = ptr[i] / in_scale;
         ptr[i] = pow(value_base, (shift + x * scale));
-        ptr[i] = float2int16(x * out_scale);
+        ptr[i] = float2int8(x * out_scale);
     }
 }
 
@@ -123,11 +123,11 @@ typedef struct hard_sigmoid_thread_context{
     float alpha;
     float beta;
     float output_scale;
-    int16_t *output;
+    int8_t *output;
 } hard_sigmoid_thread_context_t;
 
 static void hard_sigmoid_thread_tile(hard_sigmoid_thread_context_t *context, size_t index, size_t tile) {
-    int16_t *ptr = context->output + index;
+    int8_t *ptr = context->output + index;
     float alpha = context->alpha;
     float beta = context->beta;
     float output_scale = context->output_scale;
@@ -145,7 +145,7 @@ static void hard_sigmoid_thread_tile(hard_sigmoid_thread_context_t *context, siz
         else {
             x = x * alpha + beta;
         }
-        ptr[i] = CLIP_INT16(x, INT16_MAX, INT16_MIN);
+        ptr[i] = CLIP_INT8(x, INT8_MAX, INT8_MIN);
     }
 }
 
@@ -155,11 +155,11 @@ typedef struct hard_swish_thread_context {
     float alpha;
     float beta;
     float requantize;
-    int16_t *output;
+    int8_t *output;
 } hard_swish_thread_context_t;
 
 static void hard_swish_thread_tile(hard_swish_thread_context_t *context, size_t index, size_t tile) {
-    int16_t *ptr = context->output + index;
+    int8_t *ptr = context->output + index;
     float alpha = context->alpha;
     float beta = context->beta;
     float requantize = context->requantize;
@@ -178,7 +178,7 @@ static void hard_swish_thread_tile(hard_swish_thread_context_t *context, size_t 
             x = alpha * x * x + beta * x;
         }
 
-        ptr[i] = CLIP_INT16(x, INT16_MAX, INT16_MIN);
+        ptr[i] = CLIP_INT8(x, INT8_MAX, INT8_MIN);
     }
 }
 
@@ -188,12 +188,12 @@ typedef struct log_thread_context_t{
     float value_base;
     float shift;
     float scale;
-    int16_t *output;
+    int8_t *output;
 }log_thread_context_t;
 
 static void log1_thread_tile(log_thread_context_t *context, size_t index, size_t tile)
 {
-    int16_t *ptr = (int16_t*)context->output + index;
+    int8_t *ptr = (int8_t*)context->output + index;
     float in_scale = context->in_scale;
     float out_scale = context->out_scale;
     float scale = context->scale;
@@ -202,13 +202,13 @@ static void log1_thread_tile(log_thread_context_t *context, size_t index, size_t
     for (int i = 0; i < tile; i++) {
         float x = ptr[i] / in_scale;
         x = log(shift + x * scale);
-        ptr[i] = float2int16(x * out_scale);
+        ptr[i] = float2int8(x * out_scale);
     }
 }
 
 static void log2_thread_tile(log_thread_context_t *context, size_t index, size_t tile)
 {
-    int16_t *ptr = (int16_t*)context->output + index;
+    int8_t *ptr = (int8_t*)context->output + index;
     float in_scale = context->in_scale;
     float out_scale = context->out_scale;
     float scale = context->scale;
@@ -218,7 +218,7 @@ static void log2_thread_tile(log_thread_context_t *context, size_t index, size_t
     for (int i = 0; i < tile; i++) {
         float x = ptr[i] / in_scale;
         x = log(shift + x * scale) * log_base_inv;
-        ptr[i] = float2int16(x * out_scale);
+        ptr[i] = float2int8(x * out_scale);
     }
 }
 
@@ -229,12 +229,12 @@ typedef struct power_thread_context_t{
     float shift;
     float scale;
     float power;
-    int16_t *output;
+    int8_t *output;
 }power_thread_context_t;
 
 static void power_thread_tile(power_thread_context_t *context, size_t index, size_t tile)
 {
-    int16_t *ptr = (int16_t*)context->output + index;
+    int8_t *ptr = (int8_t*)context->output + index;
     float in_scale = context->in_scale;
     float out_scale = context->out_scale;
     float scale = context->scale;
@@ -244,14 +244,14 @@ static void power_thread_tile(power_thread_context_t *context, size_t index, siz
     for (int i = 0; i < tile; i++) {
         float x = ptr[i] / in_scale;
         x = pow((shift + x * scale), power);
-        ptr[i] = float2int16(x * out_scale);
+        ptr[i] = float2int8(x * out_scale);
     }
 }
 
 typedef struct relu_context{
     fixed_mul_t requantize;
     fixed_mul_t slope_fixed;
-    int16_t *output;
+    int8_t *output;
 }relu_context_t;
 
 
@@ -259,12 +259,12 @@ FUNCTION_IRAM static void relu_thread_tile(relu_context_t *context, size_t index
 
     fixed_mul_t slope_fixed = context->slope_fixed;
     fixed_mul_t requantize = context->requantize;
-    int16_t *ptr = context->output + index;
+    int8_t *ptr = context->output + index;
 
     for (int j = 0; j < tile; j++) {
         int32_t v = ptr[j];
         v = v < 0 ? MULTIPLY_FIDED(v, slope_fixed) : MULTIPLY_FIDED(v, requantize);
-        ptr[j] = CLIP_INT16(v, INT16_MAX, INT16_MIN);
+        ptr[j] = CLIP_INT8(v, INT8_MAX, INT8_MIN);
     }
 }
 
@@ -274,12 +274,12 @@ typedef struct selu_thread_context_t{
     float out_scale;
     float alphaxlambda;
     float lambda;
-    int16_t *output;
+    int8_t *output;
 }selu_thread_context_t;
 
 static void selu_thread_tile(selu_thread_context_t *context, size_t index, size_t tile)
 {
-    int16_t *ptr = (int16_t*)context->output + index;
+    int8_t *ptr = (int8_t*)context->output + index;
     float in_scale = context->in_scale;
     float out_scale = context->out_scale;
     float alphaxlambda = context->alphaxlambda;
@@ -294,7 +294,7 @@ static void selu_thread_tile(selu_thread_context_t *context, size_t index, size_
             x *= lambda;
         }
 
-        ptr[i] = float2int16(x * out_scale);
+        ptr[i] = float2int8(x * out_scale);
     }
 }
 
@@ -302,7 +302,7 @@ static void selu_thread_tile(selu_thread_context_t *context, size_t index, size_
 typedef struct swish_thread_context{
     float in_scale;
     float out_scale;
-    int16_t *output;
+    int8_t *output;
 }swish_thread_context_t;
 
 static void swish_thread_tile(swish_thread_context_t *context, size_t index, size_t tile)
@@ -310,41 +310,41 @@ static void swish_thread_tile(swish_thread_context_t *context, size_t index, siz
 
     float in_scale = context->in_scale;
     float out_scale = context->out_scale;
-    int16_t *ptr = (int16_t*)context->output + index;
+    int8_t *ptr = (int8_t*)context->output + index;
 
     for (int j = 0; j < tile; j++) {
         float x = ptr[j] / in_scale;
         x =  x / (1.f + expf(-x));
-        ptr[j] = float2int16(x * out_scale);
+        ptr[j] = float2int8(x * out_scale);
     }
 }
 
 typedef struct threshold_context{
-    int16_t threshold;
-    int16_t *output;
+    int8_t threshold;
+    int8_t *output;
 }threshold_context_t;
 
 static void threshold_thread_tile(threshold_context_t *context, size_t index, size_t tile)
 {
-    int16_t *ptr = (int16_t*)context->output + index;
-    int16_t threshold = context->threshold;
+    int8_t *ptr = (int8_t*)context->output + index;
+    int8_t threshold = context->threshold;
 
     for (int i = 0; i < tile; i++) {
         ptr[i] = ptr[i] > threshold ? 1 : 0;
     }
 }
 
-FUNCTION_IRAM static int activation_forward(
+
+static int activation_forward(
         operation_t *operation,
         vector_blob_container_t *bottom_tensors,
         vector_blob_container_t *top_tensors,
         option_t *opt) {
 
-
     blob_container_t *bottom = &bottom_tensors->data[0];
     blob_container_t *top = &top_tensors->data[0];
 
-    tensor_t * bottom_top_blob = &top->data;
+    tensor_t* bottom_top_blob = &top->data;
     size_t  size = tensor_total(bottom_top_blob);
 
     int thread_number = opt->thread_number > 0 ? opt->thread_number : 1;
@@ -354,9 +354,9 @@ FUNCTION_IRAM static int activation_forward(
     switch (activation->config.activate_type) {
         case bnll_activate_type: {
             bnll_context_t context = {
-                .out_scale = top->blob->scale,
-                .in_scale = bottom->blob->scale,
-                .output = bottom_top_blob->data
+                    .out_scale = top->blob->scale,
+                    .in_scale = bottom->blob->scale,
+                    .output = bottom_top_blob->data
             };
             PARALLELIZE_1D_TILE_1D(bnll_thread_tile, context, size, group_size);
             return CNET_STATUS_SUCCESS;
@@ -366,8 +366,8 @@ FUNCTION_IRAM static int activation_forward(
             fixed_mul_t fixed = get_fixed_mul(out_scale / bottom->blob->scale);
             clip_context_t context = {
                     .requantize = fixed,
-                    .min = float2int16(activation->config.activate_params[0] * out_scale),
-                    .max = float2int16(activation->config.activate_params[1] * out_scale),
+                    .min = float2int8(activation->config.activate_params[0] * out_scale),
+                    .max = float2int8(activation->config.activate_params[1] * out_scale),
                     .output = bottom_top_blob->data,
             };
             PARALLELIZE_1D_TILE_1D(clip_thread_tile, context, size, group_size);
@@ -502,9 +502,9 @@ FUNCTION_IRAM static int activation_forward(
         case swish_activate_type:{
 
             swish_thread_context_t context = {
-                .in_scale = top->blob->scale,
-                .out_scale = top->blob->scale,
-                .output = top->data.data
+                    .in_scale = top->blob->scale,
+                    .out_scale = top->blob->scale,
+                    .output = top->data.data
             };
 
             PARALLELIZE_1D_TILE_1D(swish_thread_tile, context, size, group_size);
@@ -513,7 +513,7 @@ FUNCTION_IRAM static int activation_forward(
         case threshold_activate_type:{
             float in_scale = bottom->blob->scale;
             threshold_context_t context = {
-                    .threshold = float2int16(activation->config.activate_params[0] * in_scale),
+                    .threshold = float2int8(activation->config.activate_params[0] * in_scale),
                     .output = bottom_top_blob->data,
             };
 
